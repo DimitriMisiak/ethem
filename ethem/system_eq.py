@@ -74,7 +74,7 @@ def sym_check(bath_list):
         sy.pprint(x, wrap_line=False, use_unicode=False)
 
     try:
-        sys.stdout = open('check_output.txt', 'w')
+        sys.stdout = open('results/check_output.txt', 'w')
 
         print "\nphi_vect :", phi
 

@@ -9,14 +9,11 @@ Test file for the et_scheme.py script
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sy
-import tqdm
-from scipy.integrate import odeint
-import scipy.signal as sgl
 
 ### importing ethem module
 #import sys
 #sys.path.append(u'/home/misiak/Scripts/ETHEM project/')
-import ethem_v4 as eth
+import ethem as eth
 
 ### closing previous plot
 plt.close('all')
