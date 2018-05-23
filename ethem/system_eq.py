@@ -9,6 +9,7 @@ electro-thermal system.
 
 import sympy as sy
 import sys
+import os
 
 def phi_vect(bath_list):
     """ Returns the temperature/voltage vectors in the order of bath_list.
@@ -74,7 +75,17 @@ def sym_check(bath_list):
         sy.pprint(x, wrap_line=False, use_unicode=False)
 
     try:
-        sys.stdout = open('results/check_output.txt', 'w')
+
+        save_path = 'results/check_output.txt'
+        save_dir = os.path.dirname(save_path)
+
+        try:
+            os.makedirs(save_dir)
+        except OSError:
+            if not os.path.isdir(save_dir):
+                raise
+
+        sys.stdout = open(save_path, 'w')
 
         print "\nphi_vect :", phi
 
