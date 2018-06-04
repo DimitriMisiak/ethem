@@ -10,7 +10,7 @@ electro-thermal system.
 import sympy as sy
 from .et_scheme import RealBath
 from .evaluation import lambda_fun, lambdify_fun
-from .et_scheme import f
+from .et_scheme import System
 
 def noise_flux_vects(bath_list):
     """ Returns a dictionnary of the different noise power affecting
@@ -70,11 +70,11 @@ def noise_flux_fun(bath_list, eval_dict):
     def fun_maker(noi):
 
         # FIXING SYMPY LAMBDIFY BROADCASTING
-        noi[0] += 1e-40 * f
+        noi[0] += 1e-40 * System.f
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(f, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(System.f, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambda_fun(noise_fun_simple, frange)
 
@@ -98,7 +98,7 @@ def noise_obs_fun(ref_bath, eval_dict):
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(f, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(System.f, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambdify_fun(noise_fun_simple, frange)
 

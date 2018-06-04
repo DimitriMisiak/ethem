@@ -29,7 +29,23 @@ def debug(x):
 # SYSTEM
 #==============================================================================
 ### Defining time and frequency variables
-t, f = eth.t, eth.f
+t, f = eth.System.t, eth.System.f
+
+### Defining the thermal system
+### cryostat
+cryo = eth.Thermostat('b')
+### absorber thermal bath
+abso = eth.ThermalBath('a')
+### ntd phonon bath
+phntd = eth.ThermalBath('p')
+### ntd thermal bath
+thntd = eth.ThermalBath('ntd')
+### thermal leak
+leak = eth.ThermalLink(phntd, cryo, 'leak')
+### glue between absorber and ntd
+glue = eth.ThermalLink(abso, phntd, 'glue')
+### ep coupling
+epcoup = eth.ThermalLink(phntd, thntd, 'ep')
 
 ### Chassis ground
 ground = eth.Voltstat('ground')
@@ -43,37 +59,16 @@ load = eth.Resistor(bias, capa, 'L')
 ### NTD resistance
 elntd = eth.Resistor(capa, ground, 'ntd')
 
-### Defining the thermal system
-### cryostat
-cryo = eth.Thermostat('b')
-### ntd thermal bath
-thntd = eth.ThermalBath('ntd')
-### ntd phonon bath
-phntd = eth.ThermalBath('p')
-### absorber thermal bath
-abso = eth.ThermalBath('a')
-### thermal leak
-leak = eth.ThermalLink(phntd, cryo, 'leak')
-### glue between absorber and ntd
-glue = eth.ThermalLink(abso, phntd, 'glue')
-### ep coupling
-epcoup = eth.ThermalLink(phntd, thntd, 'ep')
 
-
-### Bath element list where the equation are defined
+#### Bath element list where the equation are defined
 bath_list = [abso, phntd, thntd, capa]
-debug('bath_list =\n{}\n'.format(bath_list))
+#debug('bath_list =\n{}\n'.format(bath_list))
 
 ### Number of baths
 num_bath = len(bath_list)
 
 ### temperature vector
 phi = eth.phi_vect(bath_list)
-
-#==============================================================================
-# TEST EQUATIONS.PY
-#==============================================================================
-eth.sym_check(bath_list)
 
 #==============================================================================
 # PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS
@@ -129,14 +124,6 @@ epcoup.power = eth.kapitsa_power(phntd.volume*epcoup.cond_alpha,
                                  epcoup.to_bath.temperature)
 
 #==============================================================================
-# EVENT PERTURBATION
-#==============================================================================
-E, sth, epsa, epse, t0 = sy.symbols('E, sth, epsa, epse, t0')
-per = sy.zeros(len(bath_list), 1)
-per[0] = epsa * eth.event_power(E, sth, t)
-per[2] = epse * eth.event_power(E, sth, t)
-
-#==============================================================================
 # NOISE POWER
 #==============================================================================
 
@@ -179,6 +166,20 @@ load.noise_flux['Bias Voltage'] = bias_noise
 test = sy.symbols('test')
 test_noise = test**0.5
 capa.noise_obs['Test'] = test_noise
+
+
+#==============================================================================
+# UPDATING THE SYSTEM
+#==============================================================================
+eth.System.build_sym()
+
+#==============================================================================
+# EVENT PERTURBATION
+#==============================================================================
+E, sth, epsa, epse, t0 = sy.symbols('E, sth, epsa, epse, t0')
+per = sy.zeros(len(eth.System.bath_list), 1)
+per[0] = epsa * eth.event_power(E, sth, t)
+per[2] = epse * eth.event_power(E, sth, t)
 
 #==============================================================================
 # EVALUATION DICT
@@ -229,12 +230,11 @@ evad.update(evad_per)
 evad.update(evad_noise)
 
 ### checking the completeness of the evaluation dictionnary
-
 # free symbols without evaluation
-free_set = set(phi)|{t,f}
+free_set = set(eth.System.phi_vect)|{t,f}
 
 # checking the electro-thermal equations
-ete_free = eth.ete(bath_list).subs(evad).free_symbols
+ete_free = eth.System.eteq.subs(evad).free_symbols
 assert ete_free.issubset(free_set)
 
 # checking the event perturbation
@@ -242,20 +242,22 @@ per_free = per.subs(evad).free_symbols
 assert per_free.issubset(free_set)
 
 # checking the noise power
+# Not implemented yet
 
-##==============================================================================
-## STEADY STATE PLOT
-##==============================================================================
-#v_range = 10**np.linspace(-3, np.log10(25), 20)
-#quantities = [[elntd.resistivity],
-#              [-elntd.resistivity.diff(thntd.temperature) * elntd.current]]
-#label = [['NTD Resistance'], ['NTD dV/dT']]
-#fig, ax = eth.plot_steady_state(bath_list, evad, bias.voltage, v_range,
-#                                quantities=quantities, label=label)
-#ax[0].set_yscale('linear')
-#ax[-1].set_xlabel('Bias Voltage [V]')
-#ax[-2].set_ylabel('Resistance [$\Omega$]')
-#ax[-1].set_ylabel('Approx. Sensitivity [V/K]')
+#==============================================================================
+# STEADY STATE PLOT
+#==============================================================================
+v_range = 10**np.linspace(-3, np.log10(25), 20)
+quantities = [[elntd.resistivity],
+              [-elntd.resistivity.diff(thntd.temperature) * elntd.current]]
+label = [['NTD Resistance'], ['NTD dV/dT']]
+fig, ax = eth.plot_steady_state(bath_list, evad, bias.voltage, v_range,
+                                quantities=quantities, label=label)
+ax[0].set_yscale('linear')
+ax[-1].set_xlabel('Bias Voltage [V]')
+ax[-2].set_ylabel('Resistance [$\Omega$]')
+ax[-1].set_ylabel('Approx. Sensitivity [V/K]')
+
 #==============================================================================
 # STEADY STATE RESOLUTION
 #==============================================================================

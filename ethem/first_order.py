@@ -11,9 +11,8 @@ import sympy as sy
 
 from .system_eq import phi_vect, capacity_matrix
 from .evaluation import lambda_fun_mat, lambda_fun
-from .et_scheme import f, t
+from .et_scheme import System
 from .noise import noise_flux_fun, noise_obs_fun
-from .psd import psd
 
 def cm(bath_list):
     """ Returns the coupling matrix. Such that:
@@ -47,7 +46,7 @@ def admittance_mat(bath_list):
     """
     cm_mat = cm(bath_list)
 
-    deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * f
+    deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * System.f
 
     capa_matrix = capacity_matrix(bath_list)
 
@@ -79,7 +78,7 @@ def impedance_matrix_fun(bath_list, eval_dict):
     """
     cimeq = admittance_mat(bath_list)
     cimeq_num = cimeq.subs(eval_dict)
-    cimeq_funk = sy.lambdify(f, cimeq_num, modules="numpy")
+    cimeq_funk = sy.lambdify(System.f, cimeq_num, modules="numpy")
 
     cimeq_fun = lambda f: np.linalg.inv(lambda_fun_mat(cimeq_funk, f))
 
@@ -105,7 +104,7 @@ def per_fft(per):
 
     # apply the fourier transform on each term
     for k, p in enumerate(per):
-        perf[k] = sy.fourier_transform(p, t, f)
+        perf[k] = sy.fourier_transform(p, System.t, System.f)
 
     return perf
 
@@ -115,7 +114,7 @@ def per_fft_fun(per, eval_dict, fs):
     """
     perf = per_fft(per)
     perf_num = perf.subs(eval_dict) * fs
-    perf_fun_simple = sy.lambdify(f, perf_num, modules="numpy")
+    perf_fun_simple = sy.lambdify(System.f, perf_num, modules="numpy")
 
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 

@@ -9,8 +9,8 @@ Functions to access the steady state.
 import numpy as np
 import sympy as sy
 from scipy.optimize import root
+from .et_scheme import System
 from .system_eq import phi_vect, sse
-
 
 def solve_sse(bath_list, eval_dict, x0=[0.018, 0.018, 0.018, 2e-3]):
     """ Solve the steady-state system for the given system characteristics.
@@ -34,13 +34,15 @@ def solve_sse(bath_list, eval_dict, x0=[0.018, 0.018, 0.018, 2e-3]):
     scipy.optimize.root
     """
     # Quantities to be evaluated by the resolution
-    phi = phi_vect(bath_list)
+    phi = System.phi_vect
+#    phi = phi_vect(bath_list)
 
     # checking that the initial vector is adapted in length
     assert len(phi) == len(x0)
 
     # Steady state equations
-    sseq = sse(bath_list).subs(eval_dict)
+    sseq = System.sseq.subs(eval_dict)
+#    sseq = sse(bath_list).subs(eval_dict)
 
     # checking that all symbols the desired symbols are evaluated
     # if an error is raised, a term is missing from the given dictionnary
