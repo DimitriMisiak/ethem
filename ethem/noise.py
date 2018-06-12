@@ -8,9 +8,8 @@ electro-thermal system.
 """
 
 import sympy as sy
-from .et_scheme import RealBath
+from .et_scheme import RealBath, System
 from .evaluation import lambda_fun, lambdify_fun
-from .et_scheme import System
 
 def noise_flux_vects(bath_list):
     """ Returns a dictionnary of the different noise power affecting

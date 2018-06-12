@@ -10,19 +10,19 @@ import numpy as np
 import sympy as sy
 from scipy.optimize import root
 from .et_scheme import System
-from .system_eq import phi_vect, sse
 
-def solve_sse(bath_list, eval_dict, x0=[0.018, 0.018, 0.018, 2e-3]):
+def solve_sse(eval_dict, x0, method=None):
     """ Solve the steady-state system for the given system characteristics.
 
     Parameters:
     ===========
-    bath_list : list
-        List containing all the electro-thermal baths of the system.
     eval_dict :dict
         Contains the evaluation values for the system characteristics symbols.
     x0 : array_like
         Initial vector for the resolution.
+    method : str, optional
+        Type of solver. See scipy.optimize.root for more precision. By default,
+        set to None which uses 'lm' method.
 
     Returns:
     ========
@@ -35,8 +35,6 @@ def solve_sse(bath_list, eval_dict, x0=[0.018, 0.018, 0.018, 2e-3]):
     """
     # Quantities to be evaluated by the resolution
     phi = System.phi_vect
-#    phi = phi_vect(bath_list)
-
     # checking that the initial vector is adapted in length
     assert len(phi) == len(x0)
 
@@ -52,7 +50,10 @@ def solve_sse(bath_list, eval_dict, x0=[0.018, 0.018, 0.018, 2e-3]):
     funk = sy.lambdify(phi, sseq, 'numpy')
     system_eq = lambda x: np.squeeze(funk(*x))
 
+    if method is None:
+        method = 'lm'
+
     # Resolution with scipy.optimize.root
-    sol = root(system_eq, x0)#, method= 'lm')
+    sol = root(system_eq, x0, method=method)
 
     return sol.x

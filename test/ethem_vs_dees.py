@@ -15,261 +15,24 @@ import sympy as sy
 #sys.path.append(u'/home/misiak/Scripts/ETHEM project/')
 import ethem as eth
 
+from config_ethem import evad, per, t, f
+
 ### closing previous plot
 plt.close('all')
-
-DEBUG = 0
-def debug(x):
-    """ Print if in debug mode.
-    """
-    if DEBUG:
-        print x
-
-#==============================================================================
-# SYSTEM
-#==============================================================================
-### Defining time and frequency variables
-t, f = eth.System.t, eth.System.f
-
-### Defining the thermal system
-### cryostat
-cryo = eth.Thermostat('b')
-### absorber thermal bath
-abso = eth.ThermalBath('a')
-### ntd phonon bath
-phntd = eth.ThermalBath('p')
-### ntd thermal bath
-thntd = eth.ThermalBath('ntd')
-### thermal leak
-leak = eth.ThermalLink(phntd, cryo, 'leak')
-### glue between absorber and ntd
-glue = eth.ThermalLink(abso, phntd, 'glue')
-### ep coupling
-epcoup = eth.ThermalLink(phntd, thntd, 'ep')
-
-### Chassis ground
-ground = eth.Voltstat('ground')
-ground.voltage = 0
-### Bias voltage
-bias = eth.Voltstat('b')
-### Wire capacitance
-capa = eth.Capacitor('f')
-### Load resistance
-load = eth.Resistor(bias, capa, 'L')
-### NTD resistance
-elntd = eth.Resistor(capa, ground, 'ntd')
-
-
-#### Bath element list where the equation are defined
-bath_list = [abso, phntd, thntd, capa]
-#debug('bath_list =\n{}\n'.format(bath_list))
-
-### Number of baths
-num_bath = len(bath_list)
-
-### temperature vector
-phi = eth.phi_vect(bath_list)
-
-#==============================================================================
-# PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS
-#==============================================================================
-
-# temperature of NTD resistor is temperature of the NTD electron bath
-elntd.temperature = thntd.temperature
-
-# NTD characteristics
-R0, T0 = sy.symbols('R0, T0')
-elntd.resistivity = eth.ntd_char(R0, T0, thntd.temperature)
-
-# Joule Power from NTD resistor to NTD electron bath
-thntd.power = eth.joule_power(capa.voltage, elntd.resistivity)
-
-# Volume of absorber from its mass
-D_Ge, abso.mass = sy.symbols('D_Ge, M_a')
-abso.volume = abso.mass / D_Ge
-
-# Volume of NTD from its dimensions, same volume for phntd, thntd and elntd
-elntd.height, elntd.length, elntd.width = sy.symbols('H_ntd, L_ntd, W_ntd')
-elntd.volume = elntd.height * elntd.length * elntd.width
-phntd.volume = thntd.volume = elntd.volume
-
-# Thermal Capacity expression in germanium
-ce_Ge, cp_Ge = sy.symbols('ce_Ge, cp_Ge')
-abso.th_capacity = abso.volume * cp_Ge * abso.temperature**3
-phntd.th_capacity = phntd.volume * cp_Ge * phntd.temperature**3
-thntd.th_capacity = thntd.volume * ce_Ge * thntd.temperature
-
-
-
-# Power expression in gold link
-leak.surface, leak.cond_alpha, leak.cond_expo = sy.symbols('S_Au, g_Au, n_Au')
-leak.power = eth.kapitsa_power(leak.surface*leak.cond_alpha,
-                               leak.cond_expo,
-                               leak.from_bath.temperature,
-                               leak.to_bath.temperature)
-
-# Power expression in glue link
-glue.cond_alpha, glue.cond_expo = sy.symbols('g_glue, n_glue')
-glue.surface = elntd.width * elntd.length
-glue.power = eth.kapitsa_power(glue.surface*glue.cond_alpha,
-                               glue.cond_expo,
-                               glue.from_bath.temperature,
-                               glue.to_bath.temperature)
-
-# Power expression in epcoup link
-epcoup.cond_alpha, epcoup.cond_expo = sy.symbols('g_ep, n_ep')
-epcoup.power = eth.kapitsa_power(phntd.volume*epcoup.cond_alpha,
-                                 epcoup.cond_expo,
-                                 epcoup.from_bath.temperature,
-                                 epcoup.to_bath.temperature)
-
-#==============================================================================
-# NOISE POWER
-#==============================================================================
-
-# TFN noise for each link
-for link in [glue, leak, epcoup]:
-    tfn = eth.tfn_noise(link.conductance,
-                        link.from_bath.temperature,
-                        link.to_bath.temperature)
-    tfn = tfn**0.5 # to obtain the LPSD
-    link.noise_flux['TFN '+link.label] = tfn
-
-# Johnson noise for each
-for resi in [load, elntd]:
-    john = eth.johnson_noise(resi.resistivity, resi.temperature)
-    john = john**0.5 # to obtain the LPSD
-    john /= resi.resistivity # to obtain the noise current
-    resi.noise_flux['Johnson '+resi.label] = john
-
-# amplifier current noise (impact the system, and so the observer)
-i_a1, i_a2, i_a3 = sy.symbols('i_a1, i_a2, i_a3')
-noise_current = (i_a1**2 + i_a2**2 *f + i_a3**2 *f**2)**0.5
-capa.noise_sys['Ampli. Current'] = noise_current
-
-# amplifier voltage noise (impact the observer only)
-e_amp = sy.symbols('e_amp')
-noise_voltage = e_amp
-capa.noise_obs['Ampli. voltage'] = noise_voltage
-
-# low-frequency noise (impact the observer only)
-A_LF, B_LF = sy.symbols('A_LF, B_LF')
-noise_lf =  ((A_LF/f)**2 + (B_LF/f**0.5)**2)**0.5
-capa.noise_obs['Low Freq.'] = noise_lf
-
-# Bias voltage noise in load resistor
-e_bias = sy.symbols('e_bias')
-bias_noise = e_bias / load.resistivity
-load.noise_flux['Bias Voltage'] = bias_noise
-
-# Test noise
-test = sy.symbols('test')
-test_noise = test**0.5
-capa.noise_obs['Test'] = test_noise
-
-
-#==============================================================================
-# UPDATING THE SYSTEM
-#==============================================================================
-eth.System.build_sym()
-
-#==============================================================================
-# EVENT PERTURBATION
-#==============================================================================
-E, sth, epsa, epse, t0 = sy.symbols('E, sth, epsa, epse, t0')
-per = sy.zeros(len(eth.System.bath_list), 1)
-per[0] = epsa * eth.event_power(E, sth, t)
-per[2] = epse * eth.event_power(E, sth, t)
-
-#==============================================================================
-# EVALUATION DICT
-#==============================================================================
-evad_const = {'kB' : 1.3806485e-23,
-              D_Ge : 5.32,
-              ce_Ge : 1.03e-6,
-              cp_Ge : 2.66e-6,
-              test :1e-20}
-
-evad_sys = {load.resistivity : 2e9,
-            load.temperature :0.02,
-            leak.surface : 40.,
-            glue.cond_alpha : 1.46e-4,
-            glue.cond_expo : 3.5,
-            epcoup.cond_alpha : 45.67,
-            epcoup.cond_expo : 6.,
-            leak.cond_alpha : 7.81e-05,
-            leak.cond_expo : 4.,
-            capa.capacity : 2.94e-10,
-            abso.mass : 255.36,
-            elntd.length :0.3,
-            elntd.width :0.5,
-            elntd.height :0.1,
-            R0 : 0.5,
-            T0 : 5.29,
-            cryo.temperature : 18e-3,
-            bias.voltage : 0.5}
-
-evad_per = {sth : 4.03e-3,
-            E : 1e3 * 1.6e-19,
-            epsa : 1.0-2.02e-1,
-            epse : 2.02e-1,
-            t0 : 0.0}
-
-evad_noise = {e_amp :3.27e-9,
-              A_LF: 2.99e-8,
-              B_LF: 1.15e-8,
-              i_a1: 1.94e-15,
-              i_a2: 6.12e-16,
-              i_a3: 1.16e-17,
-              e_bias: 2.02e-9}
-
-evad = dict()
-evad.update(evad_const)
-evad.update(evad_sys)
-evad.update(evad_per)
-evad.update(evad_noise)
-
-### checking the completeness of the evaluation dictionnary
-# free symbols without evaluation
-free_set = set(eth.System.phi_vect)|{t,f}
-
-# checking the electro-thermal equations
-ete_free = eth.System.eteq.subs(evad).free_symbols
-assert ete_free.issubset(free_set)
-
-# checking the event perturbation
-per_free = per.subs(evad).free_symbols
-assert per_free.issubset(free_set)
-
-# checking the noise power
-# Not implemented yet
-
-#==============================================================================
-# STEADY STATE PLOT
-#==============================================================================
-v_range = 10**np.linspace(-3, np.log10(25), 20)
-quantities = [[elntd.resistivity],
-              [-elntd.resistivity.diff(thntd.temperature) * elntd.current]]
-label = [['NTD Resistance'], ['NTD dV/dT']]
-fig, ax = eth.plot_steady_state(bath_list, evad, bias.voltage, v_range,
-                                quantities=quantities, label=label)
-ax[0].set_yscale('linear')
-ax[-1].set_xlabel('Bias Voltage [V]')
-ax[-2].set_ylabel('Resistance [$\Omega$]')
-ax[-1].set_ylabel('Approx. Sensitivity [V/K]')
 
 #==============================================================================
 # STEADY STATE RESOLUTION
 #==============================================================================
+bath_list = eth.System.bath_list
+num_bath = len(bath_list)
 
-sol_ss = eth.solve_sse(bath_list, evad)
+sol_ss = eth.solve_sse(evad, x0=[0.018, 0.018, 0.018, 0.])
 # updating the evaluation dictionnary
-ss_dict = {b.main_quant : v for b,v in zip(bath_list, sol_ss)}
+ss_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_ss)}
 
 # new evaluation dictionnary taking updated with the steady state
 evad_ss = evad.copy()
 evad_ss.update(ss_dict)
-
 
 #==============================================================================
 # DISCRETIZATION VARIABLES
@@ -295,11 +58,13 @@ time = np.arange(0., L, fs**-1)
 # GENERAL SYSTEM RESPONSE
 #==============================================================================
 
-### numerical integration
-capa_matrix = eth.capacity_matrix(bath_list)
-per_num = capa_matrix**-1 * per / sy.Heaviside(t)
-sol_num = eth.plot_odeint(bath_list, per_num, evad, t, fs, L,
-                          plot=False)
+#### numerical integration
+#capa_matrix = eth.capacity_matrix(bath_list)
+#per_num = capa_matrix**-1 * per / sy.Heaviside(t)
+#sol_num = eth.plot_odeint(bath_list, per_num, evad, t, fs, L,
+#                          plot=False)
+
+sol_num = eth.num_int(per, evad, sol_ss)[1:]
 
 ### first order
 # sensitivity calculation
@@ -378,11 +143,11 @@ fig.tight_layout()
 plt.subplots_adjust(hspace=0.0)
 
 #%%
-##==============================================================================
-## RESPONSE IN REFERENCE BATH
-##==============================================================================
+#==============================================================================
+# RESPONSE IN REFERENCE BATH
+#==============================================================================
 ### Measured bath / Reference Bath
-ref_bath = capa
+ref_bath = bath_list[-1]
 ref_ind = bath_list.index(ref_bath)
 
 ### numerical integration
@@ -447,9 +212,9 @@ for a in ax:
 
 fig.tight_layout()
 
-##==============================================================================
-## NEP AND RESOLUTION
-##==============================================================================
+#==============================================================================
+# NEP AND RESOLUTION
+#==============================================================================
 # dictionnary of nep array
 nep_dict = {k: v/psd_ref for k,v in psd_full_ref.iteritems()}
 

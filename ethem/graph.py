@@ -163,7 +163,7 @@ def plot_odeint(bath_list, per, eval_dict, tsym, fs, time_length=1., plot=True, 
 
     assert phi.shape == per.shape
 
-    sol_ss = solve_sse(bath_list, eval_dict, **kwargs)
+    sol_ss = solve_sse(eval_dict, x0, **kwargs)
 
     eteq = ete(bath_list)
     eteq_num = eteq.subs(eval_dict)
