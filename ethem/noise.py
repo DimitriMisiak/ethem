@@ -11,13 +11,14 @@ import sympy as sy
 from .et_scheme import RealBath, System
 from .evaluation import lambda_fun, lambdify_fun
 
-def noise_flux_vects(bath_list):
+def noise_flux_vects():
     """ Returns a dictionnary of the different noise power affecting
     the system. The keys indicates the source of the noise. The values are
     noise perturbation vectors (LPSD) .
 
     Return LPSD/perturbation, so that the sign holds a physical meaning.
     """
+    bath_list = System.bath_list
     vects = dict()
     # internal noise of the thermal/electric bath
     for b in bath_list:
@@ -59,10 +60,10 @@ def noise_flux_vects(bath_list):
     return vects
 
 
-def noise_flux_fun(bath_list, eval_dict):
+def noise_flux_fun(eval_dict):
     """ pass
     """
-    noise_dict = noise_flux_vects(bath_list)
+    noise_dict = noise_flux_vects()
 
     fun_dict = dict()
 

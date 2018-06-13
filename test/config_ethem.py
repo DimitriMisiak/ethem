@@ -138,7 +138,7 @@ load.noise_flux['Bias Voltage'] = bias_noise
 # Test noise
 test = sy.symbols('test')
 test_noise = test**0.5
-capa.noise_obs['Test'] = test_noise
+#capa.noise_obs['Test'] = test_noise
 
 
 #==============================================================================

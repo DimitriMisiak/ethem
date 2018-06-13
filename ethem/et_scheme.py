@@ -140,8 +140,8 @@ class System(object):
 
         admit = capa_matrix*(cm_mat + deri)
 
-        return admit
-
+        System.admittance_matrix = admit
+        return System.admittance_matrix
 
     @classmethod
     def build_sym(cls, savepath='results/check_output.txt'):
@@ -187,6 +187,11 @@ class System(object):
 
             # String to conclude the txt file, and assure a good pprint.
             print '\n END OF PPRINT.'
+
+            # reverting to the original printing backend
+            sys.stdout = original_stdout
+            # for the user
+            print 'Building System Done.'
 
         finally:
             # even if an error occur, the priting backend is reverted to

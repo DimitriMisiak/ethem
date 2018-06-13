@@ -58,17 +58,11 @@ time = np.arange(0., L, fs**-1)
 # GENERAL SYSTEM RESPONSE
 #==============================================================================
 
-#### numerical integration
-#capa_matrix = eth.capacity_matrix(bath_list)
-#per_num = capa_matrix**-1 * per / sy.Heaviside(t)
-#sol_num = eth.plot_odeint(bath_list, per_num, evad, t, fs, L,
-#                          plot=False)
-
 sol_num = eth.num_int(per, evad, sol_ss)[1:]
 
 ### first order
 # sensitivity calculation
-sens = eth.response_event(bath_list, per, evad_ss, fs)
+sens = eth.response_event(per, evad_ss, fs)
 sv_arraynp = sens(freqnp)
 # temporal pulse
 pulse = np.real(np.fft.ifft(sv_arraynp, axis=0))
@@ -80,7 +74,7 @@ sv_mod_array = [np.abs(sv_arraynp[1:N/2+1,k]/fs)**2 for k in range(num_bath)]
 
 ### noise in first order
 tot_lab = 'Total'
-psd_fun_dict = eth.response_noise(bath_list, evad_ss)
+psd_fun_dict = eth.response_noise(evad_ss)
 psd_full = {k:fun(freq) for k, fun in psd_fun_dict.iteritems()}
 psd_full[tot_lab] = np.sum(psd_full.values(),axis=0)
 
@@ -114,7 +108,6 @@ for k in range(num_bath):
                               ls='-', lw=2,  color='red')
             else:
                 ax[k][1].plot(freq, psd_full[key][:,k],label=key)
-
 
     except Exception as e:
         print e

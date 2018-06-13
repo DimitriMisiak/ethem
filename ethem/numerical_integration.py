@@ -28,10 +28,10 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
         Initial vector for the integration. Should be the solution of
         the steady state, if not this is equivalent to add a Dirac perturbation
         to the system.
-    fs : float
-        Sampling frequency.
-    L : float
-        Time length of the window in second.
+    fs : float, optionnal
+        Sampling frequency. By default, 1e3 Hz.
+    L : float, optionnal
+        Time length of the window in second. By default, 1 second.
 
     Returns:
     ========

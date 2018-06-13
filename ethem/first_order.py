@@ -9,53 +9,12 @@ Functions used to complete a first-oder perturbative theory simulation.
 import numpy as np
 import sympy as sy
 
-from .system_eq import phi_vect, capacity_matrix
 from .evaluation import lambda_fun_mat, lambda_fun
 from .et_scheme import System
 from .noise import noise_flux_fun, noise_obs_fun
 
-def cm(bath_list):
-    """ Returns the coupling matrix. Such that:
-    dPhi/dt = -CM*Phi + F(t)
-    """
-    bath_num = len(bath_list)
 
-    coup_list = list()
-    for bath in bath_list:
-        flux = bath.eq().args[1]
-
-        coup = sy.zeros(1, bath_num)
-
-        for j, quant in enumerate(phi_vect(bath_list)):
-            coup[j] = flux.diff(quant) / bath.capacity
-
-        coup_list.append(coup)
-
-    M = reduce(lambda x,y: x.col_join(y), coup_list)
-
-    ### minus sign to obtain the coupling matrix as :
-    ### dPhi/dt = - M * Phi
-    return -M
-
-
-def admittance_mat(bath_list):
-    """ Returns the complex admittance matrix. It si the inverse of the
-    complex impedance matrix.
-    dPhi/dt = -CM*Phi + F(t) <=> A*Phi = tf[F](w)
-    with A = CM + 1j*w*Id
-    """
-    cm_mat = cm(bath_list)
-
-    deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * System.f
-
-    capa_matrix = capacity_matrix(bath_list)
-
-    admit = capa_matrix*(cm_mat + deri)
-
-    return admit
-
-
-def impedance_matrix_fun(bath_list, eval_dict):
+def impedance_matrix_fun(eval_dict):
     """ Return a function accepting an numpy.array with the broadcasting
     ability of numpy.
     The function returns the response matrix, or complex impedance matrix
@@ -63,8 +22,6 @@ def impedance_matrix_fun(bath_list, eval_dict):
 
     Parameters
     ==========
-    bath_list : list of RealBath
-        List of the RealBath of the system
     eval_dict : dict
         Evaluation dictionnary.
     frange : 1d numpy.ndarray
@@ -76,7 +33,7 @@ def impedance_matrix_fun(bath_list, eval_dict):
     cimeq_fun :Function taking an numpy.array as parameter and returnign an
         array of matrices, mimicking the broadcasting ability of numpy.
     """
-    cimeq = admittance_mat(bath_list)
+    cimeq = System.admittance_matrix
     cimeq_num = cimeq.subs(eval_dict)
     cimeq_funk = sy.lambdify(System.f, cimeq_num, modules="numpy")
 
@@ -138,10 +95,26 @@ def response_gen(cimeq_fun, per_fun):
     return aux_gen
 
 
-def response_event(bath_list, per, eval_dict, fs):
-    """ pass
+def response_event(per, eval_dict, fs):
+    """ Return the response function of the system to a given perturbation
+    in the frequency space.
+
+    Parameters
+    ==========
+    per : Sympy matrix
+        Power perturbation of the system. Its shape must matches the one
+        of System.admittance_matrix**-1
+    eval_dict : dict
+        Contains the evaluation values for the system characteristics symbols.
+    fs : float
+        Sampling frequency.
+
+    Return
+    ======
+    sens_fun : function
+        Taking the frequency array as parameter, return the response array.
     """
-    cimeq_fun = impedance_matrix_fun(bath_list, eval_dict)
+    cimeq_fun = impedance_matrix_fun(eval_dict)
 
     perf_fun = per_fft_fun(per, eval_dict, fs)
 
@@ -157,12 +130,25 @@ def response_event(bath_list, per, eval_dict, fs):
     return sens_fun
 
 
-def response_noise(bath_list, eval_dict):
-    """ pass
-    """
-    cimeq_fun = impedance_matrix_fun(bath_list, eval_dict)
+def response_noise(eval_dict):
+    """ Return the response function of the system to noise psd
+    perturbation in the frequency space.
 
-    noise_fun_dict = noise_flux_fun(bath_list, eval_dict)
+    Parameters
+    ==========
+    eval_dict : dict
+        Contains the evaluation values for the system characteristics symbols.
+
+    Return
+    ======
+    psd_fun_dict : dict of function
+        Key are a string specifying the noise source, and the values are
+        the corresponding response function taking as parameter the frequency
+        array and returning the response array.
+    """
+    cimeq_fun = impedance_matrix_fun(eval_dict)
+
+    noise_fun_dict = noise_flux_fun(eval_dict)
 
     psd_fun_dict = dict()
 
