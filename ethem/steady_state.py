@@ -11,7 +11,7 @@ import sympy as sy
 from scipy.optimize import root
 from .et_scheme import System
 
-def solve_sse(eval_dict, x0, method=None):
+def solve_sse(eval_dict, x0, method=None, printsuccess=False):
     """ Solve the steady-state system for the given system characteristics.
 
     Parameters:
@@ -54,6 +54,10 @@ def solve_sse(eval_dict, x0, method=None):
         method = 'lm'
 
     # Resolution with scipy.optimize.root
-    sol = root(system_eq, x0, method=method)
+    sol = root(system_eq, x0, method=method,
+               options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
+
+    if printsuccess == True:
+        print sol.success
 
     return sol.x
