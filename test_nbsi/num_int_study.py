@@ -32,7 +32,7 @@ ss_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_ss)}
 evad_ss = evad.copy()
 evad_ss.update(ss_dict)
 
-sol_int = eth.num_int(per, evad, sol_ss)
+sol_int = eth.num_int(per, evad, sol_ss, L=1.)
 time, pulse = sol_int[0], sol_int[1:]
 
 sens = max(abs(pulse[-1]))

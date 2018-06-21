@@ -11,10 +11,12 @@ import numpy as np
 import tqdm
 
 import ethem as eth
-from config_ethem import evad, nbsi, cryo, bias
+from config_ethem import evad, nbsi, cryo, bias, load
+import multiprocessing as mp
+import time
 
 ### closing previous plot
-plt.close('all')
+#plt.close('all')
 
 def solve_ss(eval_dict, v_bias, t_cryo, x0=None,
              method=None, printsuccess=False):
@@ -53,8 +55,9 @@ def solve_ss(eval_dict, v_bias, t_cryo, x0=None,
 #==============================================================================
 # BUILDING ARRAY OF SOLUTION OF STEADY STATE
 #==============================================================================
-t_range = np.linspace(0.018, 0.022, 8)
-#t_range = [0.018]
+#t_range = np.linspace(0.01889, 0.01891, 6)
+#t_range = [0.0189]
+t_range = [0.019]
 
 rt_list = [nbsi.resistivity.subs(evad).subs({'T_nbsi':t}) for t in t_range]
 plt.figure('R(T)')
@@ -62,17 +65,30 @@ plt.plot(t_range, rt_list, marker='+')
 plt.grid()
 
 #%%
-v_range = 10**np.linspace(-2, +1, 100)
+v_range = 10**np.linspace(-2, 1, 100)
+#v_range = 10**np.linspace(-1, 0, 100)
+#v_range = np.linspace(0.1975, 0.2025, 100)
+#v_range = np.linspace(0.2025, 0.1975, 100)
+#v_range = 10**np.linspace(1, -2, 10)
 
-sol_dict = dict()
-r_dict = dict()
+#sol_dict = dict()
+#r_dict = dict()
 
-for tb in t_range:
+def worker(tb):
     sol_list = []
     r_list = []
+
+#    i0 = v_range[0] /load.resistivity.subs(evad)
+#    r_norm = load.resistivity.subs(evad).subs({nbsi.temperature:30e-3})
+#    sol = [tb, tb, tb, float(i0/r_norm)]
+
     sol = [tb, tb, tb, 0.]
+#    sol = [19.5e-3, 19.5e-3, 20.3e-3, 20.2e-4]
+    XO = [tb, tb, tb, 0.]
+
     for v in tqdm.tqdm(v_range):
-        sol = solve_ss(evad, v, tb, x0=sol, printsuccess=True)
+#        sol = solve_ss(evad, v, tb, x0=sol, printsuccess=False)
+        sol = solve_ss(evad, v, tb, x0=XO, printsuccess=False)
         sol_list.append(sol)
 
         # updating the evaluation dictionnary
@@ -80,13 +96,37 @@ for tb in t_range:
         r_nbsi = nbsi.resistivity.subs(ss_dict).subs(evad)
         r_list.append(r_nbsi)
 
-    r_dict[tb] = np.array(r_list)
     sol_array = np.vstack(sol_list)
-    sol_dict[tb] = sol_array
+    r_array = np.array(r_list)
+
+    return r_array, sol_array
+
+#    sol_dict[tb] = sol_array
+#    r_dict[tb] = r_array
+
+#pool = mp.Pool()
+#pool_res = pool.map(worker, t_range)
+
+pool_res = map(worker, t_range)
+
+# should prevent an unwanted crash by giving some time to the cpus
+time.sleep(1)
+print 'Multiprocessing Done.'
+
+r_dict = {tb:pool_res[i][0] for i,tb in enumerate(t_range)}
+sol_dict = {tb:pool_res[i][1] for i,tb in enumerate(t_range)}
+
+#r_dict[tb] = np.array(r_list)
+#sol_dict[tb] = sol_array
+
 #==============================================================================
 # STEADY STATE PLOT
 #==============================================================================
-fig, ax = plt.subplots(3, sharex=True)
+
+fig = plt.figure('plot_ss')
+ax = fig.get_axes()
+if len(ax) == 0:
+    fig, ax = plt.subplots(3, sharex=True, num='plot_ss')
 
 for a in ax:
     a.set_xscale('log')
@@ -107,7 +147,7 @@ for k,v in sol_dict.iteritems():
             continue
         ax[0].plot(v_range, v[:, i], label=str(eth.System.phi_vect[i]))
 
-    ax[2].plot(v_range, r_dict[k], label='{:.4f} K'.format(k))
+    ax[2].plot(v_range, r_dict[k], label='{:.6f} K'.format(k))
 
 for a in ax:
     a.grid(True)
