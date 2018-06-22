@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-import ethem as eth
+from config_ethem import eth
 from config_ethem import evad
 
 ### closing previous plot

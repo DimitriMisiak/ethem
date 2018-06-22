@@ -7,6 +7,12 @@ Config file for the test detector using NbSi technology.
 """
 
 import sympy as sy
+
+# adding ethem module path to the pythonpath
+import sys
+from os.path import dirname
+sys.path.append( dirname(dirname(dirname(__file__))) )
+
 import ethem as eth
 
 #==============================================================================

@@ -10,11 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sy
 
-### importing ethem module
-#import sys
-#sys.path.append(u'/home/misiak/Scripts/ETHEM project/')
-import ethem as eth
-
+from config_ethem import eth
 from config_ethem import evad, per, t, f
 
 ### closing previous plot

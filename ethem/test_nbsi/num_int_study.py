@@ -8,10 +8,7 @@ Test file for the et_scheme.py script
 
 import matplotlib.pyplot as plt
 
-### importing ethem module
-#import sys
-#sys.path.append(u'/home/misiak/Scripts/ETHEM project/')
-import ethem as eth
+from config_ethem import eth
 
 from config_ethem import evad, per
 
