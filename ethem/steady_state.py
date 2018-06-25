@@ -40,7 +40,6 @@ def solve_sse(eval_dict, x0, method=None, printsuccess=False):
 
     # Steady state equations
     sseq = System.sseq.subs(eval_dict)
-#    sseq = sse(bath_list).subs(eval_dict)
 
     # checking that all symbols the desired symbols are evaluated
     # if an error is raised, a term is missing from the given dictionnary

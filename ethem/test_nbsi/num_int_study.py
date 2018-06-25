@@ -9,11 +9,10 @@ Test file for the et_scheme.py script
 import matplotlib.pyplot as plt
 
 from config_ethem import eth
-
 from config_ethem import evad, per
 
 ### closing previous plot
-#plt.close('all')
+plt.close('all')
 
 #==============================================================================
 # STEADY STATE RESOLUTION

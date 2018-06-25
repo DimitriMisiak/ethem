@@ -190,8 +190,10 @@ evad_sys = {load.resistivity : 2e9,
 
 evad_per = {sth : 4.03e-3,
             E : 1e3 * 1.6e-19,
-            epsa : 1.0-2.02e-1,
-            epse : 2.02e-1,
+#            epsa : 1.0-2.02e-1,
+#            epse : 2.02e-1,
+            epsa : 1.0,
+            epse : 0.,
             t0 : 0.0}
 
 evad_noise = {e_amp :3.27e-9,
