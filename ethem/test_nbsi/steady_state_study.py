@@ -55,7 +55,7 @@ def solve_ss(eval_dict, v_bias, t_cryo, x0=None,
 #==============================================================================
 # BUILDING ARRAY OF SOLUTION OF STEADY STATE
 #==============================================================================
-t_range = np.linspace(0.016, 0.018, 6)
+t_range = np.linspace(0.016, 0.018, 3)
 #t_range = [0.0189]
 #t_range = [0.019]
 
@@ -87,8 +87,8 @@ def worker(tb):
     XO = [tb, tb, tb, 0.]
 
     for v in tqdm.tqdm(v_range):
-        sol = solve_ss(evad, v, tb, x0=sol, printsuccess=False)
-#        sol = solve_ss(evad, v, tb, x0=XO, printsuccess=False)
+#        sol = solve_ss(evad, v, tb, x0=sol, printsuccess=False)
+        sol = solve_ss(evad, v, tb, x0=XO, printsuccess=False)
         sol_list.append(sol)
 
         # updating the evaluation dictionnary

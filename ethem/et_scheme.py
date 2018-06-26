@@ -14,6 +14,8 @@ import abc
 import sys
 import os
 
+from .convenience import build_path
+
 class System(object):
     """ Un-instanced class representing the system environment in which the
     different Element instances interact with each others.
@@ -148,6 +150,8 @@ class System(object):
         """ Call other classmethod to defines or update all the symbolic
         attributes of the System. Also, pretty_print thiese symbolic attributes
         in a txt file.
+
+        ### FIXME savepath useless ??
         """
 
         # printing the name of the method and pprint the symbolic expression.
@@ -164,12 +168,7 @@ class System(object):
 
             # creating save directory of the save file.
             save_path = 'results/check_output.txt'
-            save_dir = os.path.dirname(save_path)
-            try:
-                os.makedirs(save_dir)
-            except OSError:
-                if not os.path.isdir(save_dir):
-                    raise
+            build_path(save_path)
 
             # redirecting the printing to the txt file.
             sys.stdout = open(save_path, 'w')
