@@ -23,11 +23,11 @@ t, f = eth.System.t, eth.System.f
 
 ### Defining the thermal system
 ### cryostat
-cryo = eth.Thermostat('b')
+cryo = eth.Thermostat('cryo')
 ### absorber thermal bath
-abso = eth.ThermalBath('a')
+abso = eth.ThermalBath('abso')
 ### ntd phonon bath
-phntd = eth.ThermalBath('p')
+phntd = eth.ThermalBath('phonon')
 ### ntd thermal bath
 thntd = eth.ThermalBath('ntd')
 ### thermal leak
@@ -35,7 +35,7 @@ leak = eth.ThermalLink(phntd, cryo, 'leak')
 ### glue between absorber and ntd
 glue = eth.ThermalLink(abso, phntd, 'glue')
 ### ep coupling
-epcoup = eth.ThermalLink(phntd, thntd, 'ep')
+epcoup = eth.ThermalLink(phntd, thntd, 'epcoup')
 
 ### Chassis ground
 ground = eth.Voltstat('ground')
@@ -43,14 +43,13 @@ ground.voltage = 0
 ### Bias voltage
 bias = eth.Voltstat('bias')
 ### Wire capacitance
-capa = eth.Capacitor('f')
+capa = eth.Capacitor('wire')
 ### Load resistance
-load = eth.Resistor(bias, capa, 'L')
+load = eth.Resistor(bias, capa, 'load')
 ### NTD resistance
 elntd = eth.Resistor(capa, ground, 'ntd')
 
 savepath = 'results/system_scheme.png'
-eth.build_path(savepath)
 eth.display_scheme(savepath)
 
 #==============================================================================

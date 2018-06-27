@@ -9,7 +9,7 @@ Could serve as a buffer script for functions in very early development
 """
 
 import os
-
+import json
 
 def build_path(p):
     """ Create the path if not existing.
@@ -31,3 +31,19 @@ def build_path(p):
             raise
 
 
+def json_import(fp):
+    """ Import a dictionnary from a json file.
+
+    Parameters
+    ==========
+    fp : str
+        Json filepath.
+
+    Return
+    ======
+    data : dict
+    """
+    with open(fp, 'r') as read_file:
+        data = json.load(read_file)
+
+    return data

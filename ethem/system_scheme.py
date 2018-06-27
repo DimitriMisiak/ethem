@@ -9,10 +9,9 @@ scheme of the electro-thermal system.
 import pydot
 import Image
 
-from .convenience import build_path
 from .et_scheme import System, Bath, Link
 
-def display_scheme(fp):
+def display_scheme(fp='scheme.png'):
     """ Create and display the symbolic scheme of the System.
 
     Parameters
@@ -47,25 +46,9 @@ def display_scheme(fp):
         edge_l.set_label(lab)
         graph.add_edge(edge_l)
 
-#    node_abs = pydot.Node('Dummy Absorber\nGe')
-#    node_waf = pydot.Node('Dummy Waffer')
-#    node_nbsi = pydot.Node('Dummy NbSi\nElectron Bath')
-#    node_cryo = pydot.Node('Dummy Cryostat')
-#
-#    graph.add_node(node_abs)
-#    graph.add_node(node_waf)
-#    graph.add_node(node_nbsi)
-#    graph.add_node(node_cryo)
-
-#    edgy = pydot.Edge(node_abs, node_waf)
-#    edgy.set_label('hello there, this is a dummy scheme.')
-#
-#    graph.add_edge(edgy)
-#    graph.add_edge(pydot.Edge(node_waf, node_cryo))
-#    graph.add_edge(pydot.Edge(node_waf, node_nbsi))
-
-    graph.write_png(fp)
-    image = Image.open(fp)
-    image.show()
-
-#%%
+    try:
+        graph.write_png(fp)
+        image = Image.open(fp)
+        image.show()
+    except IOError as err:
+        print 'Cannot display scheme. IOError: {}'.format(err)

@@ -207,7 +207,12 @@ class Element(object):
 
     def __init__(self, label):
         self.label = label
+
+        # listing all the elements
         System.elements_list.append(self)
+
+        # creating an attribute to the system for each element
+        setattr(System, '{}_{}'.format(type(self).__name__, self.label), self)
 
 
 class Bath(Element):
