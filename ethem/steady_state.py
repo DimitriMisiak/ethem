@@ -9,7 +9,7 @@ Functions to access the steady state.
 import numpy as np
 import sympy as sy
 from scipy.optimize import root
-from .et_scheme import System
+from .core_classes import System
 
 def solve_sse(eval_dict, x0, method=None, printsuccess=False):
     """ Solve the steady-state system for the given system characteristics.

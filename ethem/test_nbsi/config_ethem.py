@@ -172,7 +172,7 @@ per[2] = epse * eth.event_power(E, sth, t)
 # EVALUATION DICT
 #==============================================================================
 evad_const = {'kB' : 1.3806485e-23, #J/K
-              D_Ge : 5320., #g/m**3
+              D_Ge : 5.32e6, #g/m**3
               ce_Ge : 1.03, #J/K**2/m**3
               cp_Ge : 2.66, #J/K**4/m**3
               ce_nbsi : 35, #J/K/m**3
@@ -183,9 +183,11 @@ evad_sys = {load.resistivity : 2e9, #Ohms
             glue.cond_alpha : 1.e2, #W/K**3.5/m**2
             glue.cond_expo : 3.5,
             epcoup.cond_alpha : 200.e6, #W/K**5/m**3
+#            epcoup.cond_alpha : 200.e8, #W/K**5/m**3
             epcoup.cond_expo : 5.,
-            leak.surface : 1e-8, #m**2
+            leak.surface : 1e-7, #m**2
             leak.cond_alpha : 125., #W/K**4/m**2
+#            leak.cond_alpha : 125.e1, #W/K**4/m**2
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
             abso.mass : 255.36,
@@ -198,17 +200,17 @@ evad_sys = {load.resistivity : 2e9, #Ohms
             Tc : 0.018, #K
             sig : 0.0005, #K
             cryo.temperature : 18e-3, #K
-            bias.voltage : 0.1 #V
+            bias.voltage : 0.5 #V
             }
 
 evad_per = {sth : 4.03e-3, #s
             E : 1e3 * 1.6e-19, #J
 #            epsa : 1.0,
 #            epse : 0.,
-#            epsa : 0.,
-#            epse : 1.0,
-            epsa : 1.0-2.02e-1,
-            epse : 2.02e-1,
+            epsa : 0.,
+            epse : 1.0,
+#            epsa : 1.0-2.02e-1,
+#            epse : 2.02e-1,
             t0 : 0.0}
 
 evad_noise = {e_amp :3.27e-9,

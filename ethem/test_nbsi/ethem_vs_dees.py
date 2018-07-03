@@ -142,7 +142,7 @@ ref_ind = bath_list.index(ref_bath)
 
 ### numerical integration
 numres_pulse = sol_num[ref_ind]
-numres_pulse *= -1
+#numres_pulse *= -1
 
 fft_numres = np.fft.fft(numres_pulse)
 #psd_numres = eth.psd(fft_numres, fs)[1]
@@ -150,7 +150,7 @@ psd_numres = np.abs(fft_numres[1:N/2+1])**2
 
 ### first order
 pulse_ref = pulse[ref_ind]
-pulse_ref *= -1
+#pulse_ref *= -1
 
 psd_ref = sv_mod_array[ref_ind]
 

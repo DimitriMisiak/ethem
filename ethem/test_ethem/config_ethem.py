@@ -39,7 +39,7 @@ epcoup = eth.ThermalLink(phntd, thntd, 'epcoup')
 
 ### Chassis ground
 ground = eth.Voltstat('ground')
-ground.voltage = 0
+#ground.voltage = 0
 ### Bias voltage
 bias = eth.Voltstat('bias')
 ### Wire capacitance
@@ -51,6 +51,10 @@ elntd = eth.Resistor(capa, ground, 'ntd')
 
 savepath = 'results/system_scheme.png'
 eth.display_scheme(savepath)
+
+for e in eth.System.elements_list:
+    if isinstance(e, eth.RealBath):
+        sy.pprint(e.eq(), wrap_line=False)
 
 ##==============================================================================
 ## PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS

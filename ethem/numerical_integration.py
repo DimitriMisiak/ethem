@@ -10,7 +10,7 @@ Functions to resolve the temporal response of the system with
 import numpy as np
 import sympy as sy
 from scipy.integrate import odeint
-from .et_scheme import System
+from .core_classes import System
 
 
 def num_int(per, eval_dict, x0, fs=1e3, L=1.):
