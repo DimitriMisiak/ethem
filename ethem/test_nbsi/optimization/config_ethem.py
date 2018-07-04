@@ -192,8 +192,8 @@ evad_sys = {load.resistivity : 2e9, #Ohms
             capa.capacity : 2.94e-10,
             abso.mass : 255.36,
             nbsi.length :15e-2, #m
-            nbsi.width :20e-6, #m
-            nbsi.height :50e-9, #m
+            nbsi.width : 3.15e-05, #m
+            nbsi.height : 2.750e-08, #m
             waff.height : 150e-6, #m
             waff.radius : 22e-3, #m
             rho : 20e-6, #Ohms/m
