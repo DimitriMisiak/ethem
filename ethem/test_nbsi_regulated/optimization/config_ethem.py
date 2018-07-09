@@ -31,7 +31,8 @@ waff = eth.ThermalBath('w')
 ### nbsi thermal bath
 e_bath = eth.ThermalBath('nbsi')
 ### Au thermal leak
-leak = eth.ThermalLink(waff, cryo, 'leak')
+#leak = eth.ThermalLink(waff, cryo, 'leak')
+leak = eth.ThermalLink(abso, cryo, 'leak')
 ### glue between absorber and waffer
 glue = eth.ThermalLink(abso, waff, 'glue')
 ### ep coupling
@@ -180,23 +181,20 @@ evad_const = {'kB' : 1.3806485e-23, #J/K
 
 evad_sys = {load.resistivity : 2e9, #Ohms
             load.temperature :0.02, #K
-#            glue.cond_alpha : 1.e2, #W/K**3.5/m**2
-            glue.cond_alpha : 1.e3, #W/K**3.5/m**2
+            glue.cond_alpha : 1.e2, #W/K**3.5/m**2
             glue.cond_expo : 3.5,
-#            epcoup.cond_alpha : 200.e6, #W/K**5/m**3
-            epcoup.cond_alpha : 200.e7, #W/K**5/m**3
+            epcoup.cond_alpha : 200.e6, #W/K**5/m**3
+#            epcoup.cond_alpha : 200.e8, #W/K**5/m**3
             epcoup.cond_expo : 5.,
             leak.surface : 1e-7, #m**2
-#            leak.cond_alpha : 125., #W/K**4/m**2
-            leak.cond_alpha : 125.e1, #W/K**4/m**2
+            leak.cond_alpha : 125., #W/K**4/m**2
+#            leak.cond_alpha : 125.e1, #W/K**4/m**2
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
-#            abso.mass : 255.36,
-            abso.mass : 32.,
+            abso.mass : 255.36,
             nbsi.length :15e-2, #m
-            nbsi.width :20e-6, #m
-            nbsi.height :50e-9, #m
-#            nbsi.height :50e-7, #m
+            nbsi.width : 3.15e-05, #m
+            nbsi.height : 2.750e-08, #m
             waff.height : 150e-6, #m
             waff.radius : 22e-3, #m
             rho : 20e-6, #Ohms/m

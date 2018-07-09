@@ -14,7 +14,7 @@ from config_ethem import eth
 from config_ethem import evad, per
 
 ### closing previous plot
-#plt.close('all')
+plt.close('all')
 
 #==============================================================================
 # EXPLORE BIAS VOLTAGE AT ONE TEMP.
@@ -38,8 +38,7 @@ for v in v_range:
 
     eth.dynamic_check(evad_ss)
 
-#    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
-    sol_int = eth.num_int(per, evad, sol_ss, L=1.)
+    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
     time, pulse = sol_int[0], sol_int[1:]
 
     sens = max(abs(pulse[-1]))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Config file for the test detector using NbSi technology.
+Test file for the et_scheme.py script
 
 @author: misiak
 """
@@ -26,16 +26,16 @@ t, f = eth.System.t, eth.System.f
 cryo = eth.Thermostat('b')
 ### absorber thermal bath
 abso = eth.ThermalBath('a')
-### waffer thermal bath
-waff = eth.ThermalBath('w')
-### nbsi thermal bath
-e_bath = eth.ThermalBath('nbsi')
-### Au thermal leak
-leak = eth.ThermalLink(waff, cryo, 'leak')
-### glue between absorber and waffer
-glue = eth.ThermalLink(abso, waff, 'glue')
+### ntd phonon bath
+phntd = eth.ThermalBath('p')
+### ntd thermal bath
+thntd = eth.ThermalBath('ntd')
+### thermal leak
+leak = eth.ThermalLink(phntd, cryo, 'leak')
+### glue between absorber and ntd
+glue = eth.ThermalLink(abso, phntd, 'glue')
 ### ep coupling
-epcoup = eth.ThermalLink(waff, e_bath, 'ep')
+epcoup = eth.ThermalLink(phntd, thntd, 'ep')
 
 ### Chassis ground
 ground = eth.Voltstat('ground')
@@ -46,47 +46,39 @@ bias = eth.Voltstat('b')
 capa = eth.Capacitor('f')
 ### Load resistance
 load = eth.Resistor(bias, capa, 'L')
-### NbSi thermistance
-nbsi = eth.Resistor(capa, ground, 'nbsi')
+### NTD resistance
+elntd = eth.Resistor(capa, ground, 'ntd')
 
 #==============================================================================
 # PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS
 #==============================================================================
 
-# temperature of nbsi resistor is temperature of the nbsi electron bath
-nbsi.temperature = e_bath.temperature
+# temperature of NTD resistor is temperature of the NTD electron bath
+elntd.temperature = thntd.temperature
+
+# NTD characteristics
+R0, T0 = sy.symbols('R0, T0')
+elntd.resistivity = eth.ntd_char(R0, T0, thntd.temperature)
+
+# Joule Power from NTD resistor to NTD electron bath
+thntd.power = eth.joule_power(capa.voltage, elntd.resistivity)
 
 # Volume of absorber from its mass
 D_Ge, abso.mass = sy.symbols('D_Ge, M_a')
 abso.volume = abso.mass / D_Ge
 
-# volume of waffer from its dimension
-waff.height, waff.radius = sy.symbols('H_w, R_w')
-waff.surface = sy.pi * waff.radius**2
-waff.volume = waff.height * waff.surface
-
-# Volume of nbsi from its dimensions, same volume for p_bath, e_bath and nbsi
-nbsi.height, nbsi.length, nbsi.width = sy.symbols('H_nbsi, L_nbsi, W_nbsi')
-nbsi.section = nbsi.height * nbsi.width
-nbsi.volume = nbsi.height * nbsi.length * nbsi.width
-e_bath.volume = nbsi.volume
-
-# nbsi characteristics
-Tc, rho, sig = sy.symbols('Tc, rho, sig')
-R_norm = rho * nbsi.length / nbsi.section
-nbsi.resistivity = R_norm / (1 + sy.exp(-((nbsi.temperature-Tc)/sig)))
+# Volume of NTD from its dimensions, same volume for phntd, thntd and elntd
+elntd.height, elntd.length, elntd.width = sy.symbols('H_ntd, L_ntd, W_ntd')
+elntd.volume = elntd.height * elntd.length * elntd.width
+phntd.volume = thntd.volume = elntd.volume
 
 # Thermal Capacity expression in germanium
 ce_Ge, cp_Ge = sy.symbols('ce_Ge, cp_Ge')
 abso.th_capacity = abso.volume * cp_Ge * abso.temperature**3
-waff.th_capacity = waff.volume * cp_Ge * waff.temperature**3
+phntd.th_capacity = phntd.volume * cp_Ge * phntd.temperature**3
+thntd.th_capacity = thntd.volume * ce_Ge * thntd.temperature
 
-# Thermal Capacity expression in NbSi
-ce_nbsi = sy.symbols('ce_nbsi')
-e_bath.th_capacity = e_bath.volume * ce_nbsi
 
-# Joule Power from nbsi resistor to nbsi electron bath
-e_bath.power = eth.joule_power(capa.voltage, nbsi.resistivity)
 
 # Power expression in gold link
 leak.surface, leak.cond_alpha, leak.cond_expo = sy.symbols('S_Au, g_Au, n_Au')
@@ -97,7 +89,7 @@ leak.power = eth.kapitsa_power(leak.surface*leak.cond_alpha,
 
 # Power expression in glue link
 glue.cond_alpha, glue.cond_expo = sy.symbols('g_glue, n_glue')
-glue.surface = nbsi.width * nbsi.length
+glue.surface = elntd.width * elntd.length
 glue.power = eth.kapitsa_power(glue.surface*glue.cond_alpha,
                                glue.cond_expo,
                                glue.from_bath.temperature,
@@ -105,7 +97,7 @@ glue.power = eth.kapitsa_power(glue.surface*glue.cond_alpha,
 
 # Power expression in epcoup link
 epcoup.cond_alpha, epcoup.cond_expo = sy.symbols('g_ep, n_ep')
-epcoup.power = eth.kapitsa_power(e_bath.volume*epcoup.cond_alpha,
+epcoup.power = eth.kapitsa_power(phntd.volume*epcoup.cond_alpha,
                                  epcoup.cond_expo,
                                  epcoup.from_bath.temperature,
                                  epcoup.to_bath.temperature)
@@ -123,7 +115,7 @@ for link in [glue, leak, epcoup]:
     link.noise_flux['TFN '+link.label] = tfn
 
 # Johnson noise for each
-for resi in [load, nbsi]:
+for resi in [load, elntd]:
     john = eth.johnson_noise(resi.resistivity, resi.temperature)
     john = john**0.5 # to obtain the LPSD
     john /= resi.resistivity # to obtain the noise current
@@ -171,49 +163,39 @@ per[2] = epse * eth.event_power(E, sth, t)
 #==============================================================================
 # EVALUATION DICT
 #==============================================================================
-evad_const = {'kB' : 1.3806485e-23, #J/K
-              D_Ge : 5.32e6, #g/m**3
-              ce_Ge : 1.03, #J/K**2/m**3
-              cp_Ge : 2.66, #J/K**4/m**3
-              ce_nbsi : 35, #J/K/m**3
+evad_const = {'kB' : 1.3806485e-23,
+              D_Ge : 5.32,
+              ce_Ge : 1.03e-6,
+              cp_Ge : 2.66e-6,
               test :1e-20}
 
-evad_sys = {load.resistivity : 2e9, #Ohms
-            load.temperature :0.02, #K
-#            glue.cond_alpha : 1.e2, #W/K**3.5/m**2
-            glue.cond_alpha : 1.e3, #W/K**3.5/m**2
+evad_sys = {load.resistivity : 2e9,
+            load.temperature :0.02,
+            leak.surface : 4.,
+            glue.cond_alpha : 7.46e-4,
             glue.cond_expo : 3.5,
-#            epcoup.cond_alpha : 200.e6, #W/K**5/m**3
-            epcoup.cond_alpha : 200.e7, #W/K**5/m**3
-            epcoup.cond_expo : 5.,
-            leak.surface : 1e-7, #m**2
-#            leak.cond_alpha : 125., #W/K**4/m**2
-            leak.cond_alpha : 125.e1, #W/K**4/m**2
+            epcoup.cond_alpha : 21.1,
+            epcoup.cond_expo : 6.,
+            leak.cond_alpha : 2.77e-4,
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
-#            abso.mass : 255.36,
-            abso.mass : 32.,
-            nbsi.length :15e-2, #m
-            nbsi.width :20e-6, #m
-            nbsi.height :50e-9, #m
-#            nbsi.height :50e-7, #m
-            waff.height : 150e-6, #m
-            waff.radius : 22e-3, #m
-            rho : 20e-6, #Ohms/m
-            Tc : 0.018, #K
-            sig : 0.0005, #K
-            cryo.temperature : 18e-3, #K
-            bias.voltage : 0.1 #V
-            }
+            abso.mass : 255.36,
+            elntd.length :0.4,
+            elntd.width :0.4,
+            elntd.height :0.45,
+            R0 : 1.16,
+            T0 : 2.72,
+            cryo.temperature : 18e-3,
+            bias.voltage : 2.}
 
-evad_per = {sth : 4.03e-3, #s
-            E : 1e3 * 1.6e-19, #J
-            epsa : 1.0,
-            epse : 0.,
-#            epsa : 0.0001,
-#            epse : 1.0,
+evad_per = {sth : 4.03e-3,
+            E : 1e3 * 1.6e-19,
 #            epsa : 1.0-2.02e-1,
 #            epse : 2.02e-1,
+#            epsa : 1.0,
+#            epse : 0.,
+            epsa : 0.,
+            epse : 1.,
             t0 : 0.0}
 
 evad_noise = {e_amp :3.27e-9,

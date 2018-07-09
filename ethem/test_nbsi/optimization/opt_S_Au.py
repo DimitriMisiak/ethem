@@ -105,7 +105,7 @@ def sens(value, col='slateblue'):
 #res = minimize(aux, [0.020], method='nelder-mead')
 
 ### PLOT CHECK
-t_range = 10**np.linspace(-10, 0, 10)
+t_range = 10**np.linspace(-8, -6, 10)
 cmap = plt.get_cmap('jet')
 cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
 

@@ -21,39 +21,43 @@ plt.close('all')
 #t_range = [0.016, 0.018, 0.020]
 t_range = np.linspace(0.010, 0.040, 10)
 
+#cmap = plt.get_cmap('jet')
+#
+#cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
+
 def sens(value, col='slateblue'):
 
-    tb = value[0]
+    evad.update({sy.symbols('S_Au'):value[0]})
 
-    evad.update({sy.symbols('Tc'):tb})
+    tb = 20e-3
     evad.update({eth.System.Thermostat_b.temperature:tb})
 
-    evad.update({eth.System.Voltstat_b.voltage:0.})
+#    evad.update({eth.System.Voltstat_b.voltage:0.})
 
-    sol_b4 = eth.solve_sse(evad, x0=[tb, tb, tb, 0.])
-    b4_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_b4)}
-    evad_b4 = evad.copy()
-    evad_b4.update(b4_dict)
+#    sol_b4 = eth.solve_sse(evad, x0=[tb, tb, tb, 0.])
+#    b4_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_b4)}
+#    evad_b4 = evad.copy()
+#    evad_b4.update(b4_dict)
+#
+#    g_b4 = eth.System.ThermalLink_ep.conductance.subs(evad_b4)
+#
+#    sens_b4 = eth.System.Resistor_nbsi.resistivity.diff(
+#            eth.System.Resistor_nbsi.temperature
+#    ).subs(evad_b4)
+#
+#    ib = (g_b4/sens_b4)**0.5
+#
+##    print 'Imax = ', ib
+#
+#    vmax = eth.System.Resistor_L.resistivity.subs(evad_b4)*ib
+#
+##    print 'Vmax = ', vmax
+#
+#    vb = vmax/3
+#
+##    print 'Vb = ', vb
 
-    g_b4 = eth.System.ThermalLink_ep.conductance.subs(evad_b4)
-
-    sens_b4 = eth.System.Resistor_nbsi.resistivity.diff(
-            eth.System.Resistor_nbsi.temperature
-    ).subs(evad_b4)
-
-    ib = (g_b4/sens_b4)**0.5
-
-#    print 'Imax = ', ib
-
-    vmax = eth.System.Resistor_L.resistivity.subs(evad_b4)*ib
-
-#    print 'Vmax = ', vmax
-
-    vb = vmax/3
-
-#    print 'Vb = ', vb
-
-    evad.update({eth.System.Voltstat_b.voltage:vb})
+#    evad.update({eth.System.Voltstat_b.voltage:value[0]})
 
     bath_list = eth.System.bath_list
     num_bath = len(bath_list)
@@ -68,7 +72,7 @@ def sens(value, col='slateblue'):
 
 #    eth.dynamic_check(evad_ss)
 
-    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
+    sol_int = eth.num_int(per, evad, sol_ss, L=1.)
     time, pulse = sol_int[0], sol_int[1:]
 
     sens = max(abs(pulse[-1]))
@@ -80,7 +84,7 @@ def sens(value, col='slateblue'):
         fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
 
     for i,a in enumerate(ax):
-        a.plot(time, pulse[i], label='at {0:.4f} : {1:.3f} V'.format(tb, vb),
+        a.plot(time, pulse[i], label='value = {}'.format(value[0]),
                color=col)
         a.grid(True)
 
@@ -97,11 +101,10 @@ def sens(value, col='slateblue'):
 
 #### MINIMIZATION
 #aux = lambda p: -sens(p)
-#res = minimize(aux, [0.020], method='nelder-mead')
+#res = minimize(aux, [1.], method='nelder-mead', options={'maxiter':10})
 
 ### PLOT CHECK
-t_range = np.linspace(0.015, 0.020, 10)
-
+t_range = 10**np.linspace(-1, 2, 10)
 cmap = plt.get_cmap('jet')
 cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
 
@@ -111,6 +114,7 @@ for t,c in tqdm(zip(t_range, cmap_range)):
 
 plt.figure()
 plt.plot(t_range, slist)
-
+plt.xscale('log')
+plt.yscale('log')
 
 

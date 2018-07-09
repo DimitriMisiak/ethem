@@ -21,10 +21,15 @@ plt.close('all')
 #t_range = [0.016, 0.018, 0.020]
 t_range = np.linspace(0.010, 0.040, 10)
 
+#cmap = plt.get_cmap('jet')
+#
+#cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
+
 def sens(value, col='slateblue'):
 
-    tb = value[0]
+    evad.update({sy.symbols('S_Au'):value[0]})
 
+    tb = 20e-3
     evad.update({sy.symbols('Tc'):tb})
     evad.update({eth.System.Thermostat_b.temperature:tb})
 
@@ -80,12 +85,12 @@ def sens(value, col='slateblue'):
         fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
 
     for i,a in enumerate(ax):
-        a.plot(time, pulse[i], label='at {0:.4f} : {1:.3f} V'.format(tb, vb),
+        a.plot(time, pulse[i], label='value = {}'.format(value[0]),
                color=col)
         a.grid(True)
 
-#        a.set_yscale('log')
-#        a.legend()
+        a.set_yscale('log')
+        a.legend()
 
     ax[-1].legend()
 
@@ -100,8 +105,7 @@ def sens(value, col='slateblue'):
 #res = minimize(aux, [0.020], method='nelder-mead')
 
 ### PLOT CHECK
-t_range = np.linspace(0.015, 0.020, 10)
-
+t_range = 10**np.linspace(-10, 0, 10)
 cmap = plt.get_cmap('jet')
 cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
 
@@ -111,6 +115,7 @@ for t,c in tqdm(zip(t_range, cmap_range)):
 
 plt.figure()
 plt.plot(t_range, slist)
-
+plt.xscale('log')
+plt.yscale('log')
 
 

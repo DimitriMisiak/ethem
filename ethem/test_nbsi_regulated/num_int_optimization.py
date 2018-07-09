@@ -21,7 +21,11 @@ plt.close('all')
 #t_range = [0.016, 0.018, 0.020]
 t_range = np.linspace(0.010, 0.040, 10)
 
-def sens(value, col='slateblue'):
+#cmap = plt.get_cmap('jet')
+#
+#cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
+
+def sens(value):
 
     tb = value[0]
 
@@ -74,23 +78,23 @@ def sens(value, col='slateblue'):
     sens = max(abs(pulse[-1]))
 
 
-    fig = plt.figure('plot_odeint')
-    ax = fig.get_axes()
-    if len(ax) == 0:
-        fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
-
-    for i,a in enumerate(ax):
-        a.plot(time, pulse[i], label='at {0:.4f} : {1:.3f} V'.format(tb, vb),
-               color=col)
-        a.grid(True)
-
-#        a.set_yscale('log')
-#        a.legend()
-
-    ax[-1].legend()
-
-    ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
-    fig.tight_layout()
+#    fig = plt.figure('plot_odeint')
+#    ax = fig.get_axes()
+#    if len(ax) == 0:
+#        fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
+#
+#    for i,a in enumerate(ax):
+#        a.plot(time, pulse[i], label='at {0:.4f} : {1:.3f} V'.format(tb, vb),
+#               color=col)
+#        a.grid(True)
+#
+##        a.set_yscale('log')
+##        a.legend()
+#
+#    ax[-1].legend()
+#
+#    ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
+#    fig.tight_layout()
 
     print sens*1e9
     return sens*1e9
@@ -101,13 +105,9 @@ def sens(value, col='slateblue'):
 
 ### PLOT CHECK
 t_range = np.linspace(0.015, 0.020, 10)
-
-cmap = plt.get_cmap('jet')
-cmap_range = [cmap(i) for i in np.linspace(0, 1, len(t_range))]
-
 slist = []
-for t,c in tqdm(zip(t_range, cmap_range)):
-    slist.append(sens([t], col=c))
+for t in tqdm(t_range):
+    slist.append(sens([t]))
 
 plt.figure()
 plt.plot(t_range, slist)
