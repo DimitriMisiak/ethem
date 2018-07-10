@@ -1,0 +1,7 @@
+# ignoring the compiled python file
+*.pyc
+
+.spyproject/
+
+# ignoring the results produced by the tests
+test/results/
