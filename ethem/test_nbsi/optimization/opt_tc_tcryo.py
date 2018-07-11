@@ -49,7 +49,8 @@ def sens(value, col='slateblue'):
 
 #    print 'Vmax = ', vmax
 
-    vb = vmax/3
+#    vb = vmax/3
+    vb = vmax/2
 
 #    print 'Vb = ', vb
 
@@ -92,7 +93,7 @@ def sens(value, col='slateblue'):
     ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
     fig.tight_layout()
 
-    print sens*1e9
+#    print sens*1e9
     return sens*1e9
 
 #### MINIMIZATION
@@ -112,5 +113,6 @@ for t,c in tqdm(zip(t_range, cmap_range)):
 plt.figure()
 plt.plot(t_range, slist)
 
+print __file__.name
 
 

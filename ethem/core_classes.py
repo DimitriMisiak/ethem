@@ -150,8 +150,6 @@ class System(object):
         """ Call other classmethod to defines or update all the symbolic
         attributes of the System. Also, pretty_print thiese symbolic attributes
         in a txt file.
-
-        ### FIXME savepath useless ??
         """
 
         # printing the name of the method and pprint the symbolic expression.
@@ -167,11 +165,10 @@ class System(object):
         try:
 
             # creating save directory of the save file.
-            save_path = 'results/check_output.txt'
-            build_path(save_path)
+            build_path(savepath)
 
             # redirecting the printing to the txt file.
-            sys.stdout = open(save_path, 'w')
+            sys.stdout = open(savepath, 'w')
 
             # defining the attribute 'bath_list'
             System.bath_list = System.subclass_list(RealBath)
@@ -190,7 +187,7 @@ class System(object):
             # reverting to the original printing backend
             sys.stdout = original_stdout
             # for the user
-            print 'Building System Done.'
+            print 'Building System Done (written in {})'.format(savepath)
 
         finally:
             # even if an error occur, the priting backend is reverted to

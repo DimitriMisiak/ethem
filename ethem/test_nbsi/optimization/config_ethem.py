@@ -29,7 +29,9 @@ abso = eth.ThermalBath('a')
 ### waffer thermal bath
 waff = eth.ThermalBath('w')
 ### nbsi thermal bath
-e_bath = eth.ThermalBath('nbsi')
+class NBSI(eth.ThermalBath):
+    pass
+e_bath = NBSI('nbsi')
 ### Au thermal leak
 leak = eth.ThermalLink(waff, cryo, 'leak')
 ### glue between absorber and waffer
@@ -48,6 +50,11 @@ capa = eth.Capacitor('f')
 load = eth.Resistor(bias, capa, 'L')
 ### NbSi thermistance
 nbsi = eth.Resistor(capa, ground, 'nbsi')
+
+#==============================================================================
+# EARLY BUILD FOR DEBUG PURPOSE
+#==============================================================================
+eth.System.build_sym(savepath='results/check_early')
 
 #==============================================================================
 # PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS
@@ -85,8 +92,10 @@ waff.th_capacity = waff.volume * cp_Ge * waff.temperature**3
 ce_nbsi = sy.symbols('ce_nbsi')
 e_bath.th_capacity = e_bath.volume * ce_nbsi
 
-# Joule Power from nbsi resistor to nbsi electron bath
-e_bath.power = eth.joule_power(capa.voltage, nbsi.resistivity)
+## Joule Power from nbsi resistor to nbsi electron bath
+NBSI.power = property(lambda self: eth.joule_power(capa.voltage, nbsi.resistivity))
+#e_bath.power = eth.joule_power(capa.voltage, nbsi.resistivity)
+print e_bath.power
 
 # Power expression in gold link
 leak.surface, leak.cond_alpha, leak.cond_expo = sy.symbols('S_Au, g_Au, n_Au')
@@ -113,7 +122,6 @@ epcoup.power = eth.kapitsa_power(e_bath.volume*epcoup.cond_alpha,
 #==============================================================================
 # NOISE POWER
 #==============================================================================
-
 # TFN noise for each link
 for link in [glue, leak, epcoup]:
     tfn = eth.tfn_noise(link.conductance,
@@ -154,11 +162,10 @@ test = sy.symbols('test')
 test_noise = test**0.5
 #capa.noise_obs['Test'] = test_noise
 
-
 #==============================================================================
 # UPDATING THE SYSTEM
 #==============================================================================
-eth.System.build_sym()
+eth.System.build_sym(savepath='results/check_full')
 
 #==============================================================================
 # EVENT PERTURBATION
@@ -183,11 +190,9 @@ evad_sys = {load.resistivity : 2e9, #Ohms
             glue.cond_alpha : 1.e2, #W/K**3.5/m**2
             glue.cond_expo : 3.5,
             epcoup.cond_alpha : 200.e6, #W/K**5/m**3
-#            epcoup.cond_alpha : 200.e8, #W/K**5/m**3
             epcoup.cond_expo : 5.,
             leak.surface : 1e-7, #m**2
             leak.cond_alpha : 125., #W/K**4/m**2
-#            leak.cond_alpha : 125.e1, #W/K**4/m**2
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
             abso.mass : 255.36,
@@ -257,3 +262,27 @@ for e in eth.System.elements_list:
         for v in e.noise_flux.values():
             noise_free = v.subs(evad).free_symbols
             assert noise_free.issubset(free_set)
+
+#==============================================================================
+# NBSI SPECIFIC FUNCTION
+#==============================================================================
+def i2u(i, eval_dict):
+    """ Return the approximate voltage bias needed to achieve the current i
+    into the nbsi.
+    """
+    rload = eth.System.Resistor_L.resistivity.subs(eval_dict)
+    u = i * rload
+    return u
+
+def opti(eval_ss):
+    """ Determine the optimal safety current for the nbsi.
+    """
+
+    pass
+
+
+
+
+
+
+

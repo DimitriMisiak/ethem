@@ -171,7 +171,8 @@ evad_const = {'kB' : 1.3806485e-23,
 
 evad_sys = {load.resistivity : 2e9,
             load.temperature :0.02,
-            leak.surface : 40.,
+#            leak.surface : 40.,
+            leak.surface : .4,
             glue.cond_alpha : 1.46e-4,
             glue.cond_expo : 3.5,
             epcoup.cond_alpha : 45.67,
@@ -188,12 +189,13 @@ evad_sys = {load.resistivity : 2e9,
             cryo.temperature : 18e-3,
             bias.voltage : 0.5}
 
-evad_per = {sth : 4.03e-3,
+evad_per = {#sth : 4.03e-3,
+            sth : 1e-10,
             E : 1e3 * 1.6e-19,
 #            epsa : 1.0-2.02e-1,
 #            epse : 2.02e-1,
             epsa : 1.0,
-            epse : 0.,
+            epse : 0.0,
             t0 : 0.0}
 
 evad_noise = {e_amp :3.27e-9,

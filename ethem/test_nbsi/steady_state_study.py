@@ -55,9 +55,9 @@ def solve_ss(eval_dict, v_bias, t_cryo, x0=None,
 #==============================================================================
 # BUILDING ARRAY OF SOLUTION OF STEADY STATE
 #==============================================================================
-t_range = np.linspace(0.016, 0.018, 3)
+#t_range = np.linspace(0.016, 0.018, 3)
 #t_range = [0.0189]
-#t_range = [0.019]
+t_range = [0.017]
 
 rt_list = [nbsi.resistivity.subs(evad).subs({'T_nbsi':t}) for t in t_range]
 plt.figure('R(T)')

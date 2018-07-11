@@ -28,7 +28,9 @@ ss_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_ss)}
 evad_ss = evad.copy()
 evad_ss.update(ss_dict)
 
-sol_int = eth.num_int(per, evad, sol_ss)
+sol_int = eth.num_int(per, evad, sol_ss, fs=1e4)
+#sol_int = eth.num_int(per, evad, sol_ss)
+
 time, pulse = sol_int[0], sol_int[1:]
 
 sens = max(abs(pulse[-1]))
@@ -44,3 +46,6 @@ for i,a in enumerate(ax):
 
 ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
 fig.tight_layout()
+
+print max(pulse[0])
+print max(pulse[2])

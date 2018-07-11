@@ -9,12 +9,13 @@ Functions to resolve the temporal response of the system with
 
 import numpy as np
 import sympy as sy
-from scipy.integrate import odeint
+from scipy.integrate import odeint, solve_ivp
 from .core_classes import System
 
 
 def num_int(per, eval_dict, x0, fs=1e3, L=1.):
-    """ Numerical integration of the electro-thermal equation with
+    """ DEPRECATED.
+    Numerical integration of the electro-thermal equation with
     power perturbation for the given evaluation dictionnary.
 
     Parameters:
@@ -73,5 +74,40 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     sol_per = sol-x0
 
     sol_array = np.insert(sol_per.T, 0, time, axis=0)
+
+    return sol_array
+
+
+def num_int_proto(per, eval_dict, x0, fs=1e3, L=1., max_step_coef=10.):
+
+    x0 = np.array(x0)
+
+    time = np.arange(0., L, fs**-1)
+
+    phi = System.phi_vect
+    param = [System.t] + list(phi)
+
+    # perturbation
+    capa_matrix = System.capacity_matrix
+    per_arg = capa_matrix**-1 * per / sy.Heaviside(System.t)
+
+    eteq = System.eteq
+
+    eq = per_arg + eteq
+    eq_num = list(eq.subs(eval_dict))
+    #eq_fun = sy.lambdify(param, eq_num, modules='numpy')
+
+    eq_fun = sy.lambdify(param, eq_num)
+
+    def eq_aux(t, y):
+        list_y = list(y)
+        param = [t] + list_y
+        vec = eq_fun(*param)
+        return vec
+
+    sol = solve_ivp(eq_aux, [0, L], x0, t_eval=time,
+                    max_step=max_step_coef*fs**-1)
+
+    sol_array = np.vstack((sol.t, sol.y))
 
     return sol_array

@@ -71,6 +71,8 @@ def sens(value, col='slateblue'):
     evad_ss = evad.copy()
     evad_ss.update(ss_dict)
 
+    print ss_dict
+
 #    eth.dynamic_check(evad_ss)
 
     sol_int = eth.num_int(per, evad, sol_ss, L=10.)
