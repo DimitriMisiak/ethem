@@ -95,7 +95,6 @@ e_bath.th_capacity = e_bath.volume * ce_nbsi
 ## Joule Power from nbsi resistor to nbsi electron bath
 NBSI.power = property(lambda self: eth.joule_power(capa.voltage, nbsi.resistivity))
 #e_bath.power = eth.joule_power(capa.voltage, nbsi.resistivity)
-print e_bath.power
 
 # Power expression in gold link
 leak.surface, leak.cond_alpha, leak.cond_expo = sy.symbols('S_Au, g_Au, n_Au')

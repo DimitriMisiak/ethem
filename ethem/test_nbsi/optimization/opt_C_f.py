@@ -37,6 +37,9 @@ def sens(value, col='slateblue'):
 
     sol_b4 = eth.solve_sse(evad, x0=[tb, tb, tb, 0.])
     b4_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_b4)}
+
+    print b4_dict
+
     evad_b4 = evad.copy()
     evad_b4.update(b4_dict)
 
