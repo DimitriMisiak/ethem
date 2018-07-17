@@ -273,14 +273,68 @@ def i2u(i, eval_dict):
     u = i * rload
     return u
 
+
 def opti(eval_ss):
     """ Determine the optimal safety current for the nbsi.
     """
 
     pass
 
-
-
+#import matplotlib.pyplot as plt
+#def sens(eval_dict, param, values, col='slateblue'):
+#
+#    edict = eval_dict.copy()
+#
+#    for p in param:
+#        try:
+#            edict.pop(p)
+#        except:
+#            pass
+#
+#
+#
+#    bath_list = eth.System.bath_list
+#    num_bath = len(bath_list)
+#
+#    sol_ss = eth.solve_sse(evad, x0=[tb, tb, tb, 0.])
+#    # updating the evaluation dictionnary
+#    ss_dict = {b : v for b,v in zip(eth.System.phi_vect, sol_ss)}
+#
+#    # new evaluation dictionnary taking updated with the steady state
+#    evad_ss = evad.copy()
+#    evad_ss.update(ss_dict)
+#
+#    print ss_dict
+#
+##    eth.dynamic_check(evad_ss)
+#
+#    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
+#    time, pulse = sol_int[0], sol_int[1:]
+#
+#    sens = max(abs(pulse[-1]))
+#
+#
+#    fig = plt.figure('plot_odeint')
+#    ax = fig.get_axes()
+#    if len(ax) == 0:
+#        fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
+#
+#    for i,a in enumerate(ax):
+#        a.plot(time, pulse[i], label='{} = {}'.format(param, values),
+#               color=col)
+#        a.grid(True)
+#
+##        a.set_yscale('log')
+##        a.legend()
+#
+#    ax[-1].legend()
+#
+#    ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
+#    fig.tight_layout()
+#
+#    print sens*1e9
+#    return sens*1e9
+#
 
 
 

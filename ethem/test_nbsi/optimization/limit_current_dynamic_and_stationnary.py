@@ -44,13 +44,17 @@ axx[0].set_ylabel('Conductance Term [W/K]')
 axx[1].set_ylabel('Total Conductance [W/K]')
 axx[1].set_xlabel('NbSi Temperature [K]')
 
+figgg, axxx = plt.subplots(2, sharex=True, num='Ultra')
+axxx[0].set_ylabel('Ultra Term [W/K**2]')
+axxx[1].set_ylabel('Total Ultra [W/K**2]')
+axxx[1].set_xlabel('NbSi Temperature [K]')
 
 t_array = np.linspace(10e-3, 50e-3, 1000)
 
 evad_vf = evad.copy()
-#evad_vf.update({t_cryo:0.016})
+evad_vf.update({t_cryo:0.016})
 #evad_vf.update({t_cryo:0.018})
-evad_vf.update({t_cryo:0.017})
+#evad_vf.update({t_cryo:0.017})
 
 ### STAIONNARY
 epow = -epcoup.power.subs({waffer.temperature: cryo.temperature})
@@ -78,8 +82,23 @@ cond_leak_fun = sy.lambdify(t_nbsi, cond_leak_num, modules='numpy')
 cond_leak_array = cond_leak_fun(t_array)
 axx[0].plot(t_array, cond_leak_array, label='Leak', color='k', ls='--')
 
-i_range = 10**np.linspace(-11, -9, 20)
-#i_range = np.linspace(0.8e-10, 3e-10, 20)
+### ULTRA
+ultra_ep = cond_ep.diff(t_nbsi)
+ultra_ep_num = ultra_ep.subs(evad_vf)
+ultra_ep_fun = sy.lambdify(t_nbsi, ultra_ep_num, modules='numpy')
+ultra_ep_array = ultra_ep_fun(t_array)
+axxx[0].plot(t_array, ultra_ep_array, label='EP coupling', color='k')
+
+ultra_leak = cond_leak.diff(t_nbsi)
+ultra_leak_num = ultra_leak.subs(evad_vf)
+ultra_leak_fun = sy.lambdify(t_nbsi, ultra_leak_num, modules='numpy')
+ultra_leak_array = ultra_leak_fun(t_array)
+axxx[0].plot(t_array, ultra_leak_array, label='Leak', color='k', ls='--')
+
+
+#i_range = 10**np.linspace(-11, -9, 20)
+#i_range = np.linspace(0.8e-10, 1e-10, 50) #17mK
+i_range = np.linspace(0.5e-10, 1.5e-10, 20)
 #i_range = [2e-10]
 
 cmap = plt.get_cmap('jet')
@@ -128,6 +147,25 @@ for i,c in tqdm(zip(i_range, c_range)):
     axx[1].plot(t_array, eq_dyn_array, label='I={:.2e}'.format(i), color=c)
     axx[1].scatter(sol.x, eq_dyn_fun(sol.x), marker='*', color=c, edgecolors='k')
     axx[0].scatter(sol.x, cond_joule_fun(sol.x), marker='*', color=c, edgecolors='k')
+
+    ### ULTRA
+    ultra_joule = cond_joule.diff(t_nbsi)
+    ultra_joule_num = ultra_joule.subs(evad_vf)
+    ultra_joule_fun = sy.lambdify(t_nbsi, ultra_joule_num, modules='numpy')
+
+    eq_ultra = ultra_joule - ultra_ep
+    eq_ultra_num = eq_ultra.subs(evad_vf)
+    eq_ultra_fun = sy.lambdify(t_nbsi, eq_ultra_num, modules='numpy')
+
+    ultra_joule_array = ultra_joule_fun(t_array)
+    eq_ultra_array = eq_ultra_fun(t_array)
+
+    axxx[0].plot(t_array, ultra_joule_array,
+               label='Joule I={:.2e}'.format(i), color=c)
+    axxx[1].plot(t_array, eq_ultra_array, label='I={:.2e}'.format(i), color=c)
+    axxx[1].scatter(sol.x, eq_ultra_fun(sol.x), marker='*', color=c, edgecolors='k')
+    axxx[0].scatter(sol.x, ultra_joule_fun(sol.x), marker='*', color=c, edgecolors='k')
+
 for a in ax:
     a.grid()
     a.legend(fontsize='xx-small')
