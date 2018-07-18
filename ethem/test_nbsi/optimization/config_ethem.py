@@ -203,8 +203,8 @@ evad_sys = {load.resistivity : 2e9, #Ohms
             rho : 20e-6, #Ohms/m
             Tc : 0.018, #K
             sig : 0.0005, #K
-            cryo.temperature : 18e-3, #K
-            bias.voltage : 0.1 #V
+            cryo.temperature : 17e-3, #K
+            bias.voltage : 0.05 #V
             }
 
 evad_per = {sth : 4.03e-3, #s

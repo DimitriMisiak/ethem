@@ -52,7 +52,7 @@ axxx[1].set_xlabel('NbSi Temperature [K]')
 t_array = np.linspace(10e-3, 50e-3, 1000)
 
 evad_vf = evad.copy()
-evad_vf.update({t_cryo:0.016})
+#evad_vf.update({t_cryo:0.016})
 #evad_vf.update({t_cryo:0.018})
 #evad_vf.update({t_cryo:0.017})
 
