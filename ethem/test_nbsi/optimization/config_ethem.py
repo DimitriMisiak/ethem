@@ -55,7 +55,6 @@ nbsi = eth.Resistor(capa, ground, 'nbsi')
 # EARLY BUILD FOR DEBUG PURPOSE
 #==============================================================================
 eth.System.build_sym(savepath='results/check_early')
-
 #==============================================================================
 # PHYSICAL RELATIONS AND ADDITIONNAL SYMBOLS
 #==============================================================================

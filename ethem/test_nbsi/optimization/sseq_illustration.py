@@ -18,7 +18,7 @@ from config_ethem import evad, per, i2u
 ### closing previous plot
 #plt.close('all')
 
-t_nbsi = eth.System.ThermalBath_nbsi.temperature
+t_nbsi = eth.System.NBSI_nbsi.temperature
 v_f = eth.System.Capacitor_f.voltage
 v_b = eth.System.Voltstat_b.voltage
 

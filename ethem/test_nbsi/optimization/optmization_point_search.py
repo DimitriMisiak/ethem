@@ -31,6 +31,11 @@ leak = eth.System.ThermalLink_leak
 t_cryo = cryo.temperature
 t_nbsi = th_nbsi.temperature
 
+evad_opt = evad.copy()
+evad_opt.pop(t_cryo)
+
+print th_nbsi.eq().args[1].diff(t_nbsi).subs(evad_opt)
+
 i_bias = sy.symbols('i_bias')
 capa.voltage = nbsi.resistivity * i_bias
 
@@ -40,9 +45,6 @@ eq3 = eq2.diff(t_nbsi)
 
 eqs = [eq1, eq2]
 #eqs = [eq1, eq2, eq3]
-
-evad_opt = evad.copy()
-evad_opt.pop(t_cryo)
 
 eqs_aux = list()
 for eq in eqs:
@@ -55,8 +57,8 @@ for eq in eqs_aux:
 param = (i_bias, t_cryo)
 eqs_fun = sy.lambdify(param, eqs_num, modules="numpy")
 
-t_array = np.linspace(0.e-3, 20e-3, 20)
-i_array = 10**np.linspace(-11, -9.5, 20)
+t_array = np.linspace(0.e-3, 20e-3, 30)
+i_array = 10**np.linspace(-11, -9.5, 30)
 
 i_mesh, t_mesh = np.meshgrid(i_array, t_array)
 eqs_mesh = eqs_fun(i_mesh, t_mesh)
@@ -69,19 +71,19 @@ label = ('power', 'conductance', 'ultra')
 fig = plt.figure('power')
 ax = plt.axes(projection='3d')
 #ax.contour3D(np.log10(i_mesh), t_mesh, eqs_mesh[0], 100, cmap='jet')
-ax.plot_wireframe(np.log10(i_mesh), t_mesh, eqs_mesh[0], cmap='jet', alpha=0.2)
-ax.set_xlabel('Current I')
-ax.set_ylabel('Temperature T')
-ax.set_zlabel('power')
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, eqs_mesh[0], cmap='jet', alpha=0.3)
+ax.set_xlabel('Bias Current I')
+ax.set_ylabel('Temperature Cryo T')
+ax.set_zlabel('Total Power')
 
 fig2 = plt.figure('conductance')
 ax2 = plt.axes(projection='3d')
 #ax2.contour3D(np.log10(i_mesh), t_mesh, eqs_mesh[1], 100, cmap='jet')
 #ax2.plot_wireframe(np.log10(i_mesh), t_mesh, eqs_mesh[1], cmap='jet', alpha=0.2)
-ax2.scatter(np.log10(i_mesh), t_mesh, eqs_mesh[1], cmap='jet', alpha=0.2)
-ax2.set_xlabel('Current I')
-ax2.set_ylabel('Temperature T')
-ax2.set_zlabel('conductance')
+ax2.plot_wireframe(np.log10(i_mesh), t_mesh, eqs_mesh[1], cmap='jet', alpha=0.3)
+ax2.set_xlabel('Bias Current I')
+ax2.set_ylabel('Temperature Cryo T')
+ax2.set_zlabel('Total Conductance')
 
 t_sol1 = list()
 i_sol1 = list()

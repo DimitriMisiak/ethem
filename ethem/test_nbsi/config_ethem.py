@@ -183,16 +183,16 @@ evad_sys = {load.resistivity : 2e9, #Ohms
 #            glue.cond_alpha : 1.e2, #W/K**3.5/m**2
             glue.cond_alpha : 1.e3, #W/K**3.5/m**2
             glue.cond_expo : 3.5,
-#            epcoup.cond_alpha : 200.e6, #W/K**5/m**3
-            epcoup.cond_alpha : 200.e7, #W/K**5/m**3
+            epcoup.cond_alpha : 200.e6, #W/K**5/m**3
+#            epcoup.cond_alpha : 200.e7, #W/K**5/m**3
             epcoup.cond_expo : 5.,
             leak.surface : 1e-7, #m**2
-#            leak.cond_alpha : 125., #W/K**4/m**2
-            leak.cond_alpha : 125.e1, #W/K**4/m**2
+            leak.cond_alpha : 125., #W/K**4/m**2
+#            leak.cond_alpha : 125.e1, #W/K**4/m**2
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
-#            abso.mass : 255.36,
-            abso.mass : 32.,
+            abso.mass : 255.36,
+#            abso.mass : 32.,
             nbsi.length :15e-2, #m
             nbsi.width :20e-6, #m
             nbsi.height :50e-9, #m
@@ -208,10 +208,10 @@ evad_sys = {load.resistivity : 2e9, #Ohms
 
 evad_per = {sth : 4.03e-3, #s
             E : 1e3 * 1.6e-19, #J
-            epsa : 1.0,
-            epse : 0.,
-#            epsa : 0.0001,
-#            epse : 1.0,
+#            epsa : 1.0,
+#            epse : 0.,
+            epsa : 0.0001,
+            epse : 1.0,
 #            epsa : 1.0-2.02e-1,
 #            epse : 2.02e-1,
             t0 : 0.0}

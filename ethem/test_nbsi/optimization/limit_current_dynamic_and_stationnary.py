@@ -52,7 +52,7 @@ axxx[1].set_xlabel('NbSi Temperature [K]')
 t_array = np.linspace(10e-3, 50e-3, 1000)
 
 evad_vf = evad.copy()
-#evad_vf.update({t_cryo:0.016})
+evad_vf.update({t_cryo:0.016})
 #evad_vf.update({t_cryo:0.018})
 #evad_vf.update({t_cryo:0.017})
 
@@ -98,7 +98,8 @@ axxx[0].plot(t_array, ultra_leak_array, label='Leak', color='k', ls='--')
 
 #i_range = 10**np.linspace(-11, -9, 20)
 #i_range = np.linspace(0.8e-10, 1e-10, 50) #17mK
-i_range = np.linspace(0.5e-10, 1.5e-10, 20)
+#i_range = np.linspace(0.5e-10, 1.5e-10, 20)
+i_range = np.linspace(1e-10, 3e-10, 10)
 #i_range = [2e-10]
 
 cmap = plt.get_cmap('jet')

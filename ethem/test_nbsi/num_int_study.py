@@ -38,28 +38,54 @@ for v in v_range:
 
     eth.dynamic_check(evad_ss)
 
-#    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
-    sol_int = eth.num_int(per, evad, sol_ss, L=1.)
+    sol_int = eth.num_int(per, evad, sol_ss, L=10.)
+#    sol_int = eth.num_int(per, evad, sol_ss, L=1.)
     time, pulse = sol_int[0], sol_int[1:]
 
     sens = max(abs(pulse[-1]))
 
+#    fig = plt.figure('plot_odeint')
+#    ax = fig.get_axes()
+#    if len(ax) == 0:
+#        fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
+#
+#    for i,a in enumerate(ax):
+#        a.plot(time, pulse[i],
+#               label='$\epsilon = ${0:.2f}, Sv = {1:.2f} nV/keV'.format(
+#                       evad[sy.symbols('epse')], sens*1e9
+#                       )
+#               )
+#        a.grid(True)
+
     fig = plt.figure('plot_odeint')
     ax = fig.get_axes()
     if len(ax) == 0:
-        fig, ax = plt.subplots(num_bath, sharex=True, num='plot_odeint')
+        fig, ax = plt.subplots(1, sharex=True, num='plot_odeint')
 
-    for i,a in enumerate(ax):
-        a.plot(time, pulse[i], label='{0:.3f} V'.format(v))
-        a.grid(True)
+    a = ax[0]
+    a.plot(time, pulse[-1],
+           label='$\epsilon = ${0:.2f}, Sv = {1:.2f} nV/keV'.format(
+                   evad[sy.symbols('epse')], sens*1e9
+                   )
+           )
+    a.grid(True)
 
-#        a.set_yscale('log')
-        a.legend()
+#    ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
+#    print sens*1e9
+#    fig.tight_layout()
 
-    ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
+
+    a.set_yscale('log')
+
+    a.legend(loc=1, framealpha=1.0)
+
+    a.set_xlabel('Time [s]')
+#    ax[0].set_ylabel('Absorber [K]')
+#    ax[1].set_ylabel('Waffer [K]')
+#    ax[2].set_ylabel('NbSi [K]')
+    a.set_ylabel('NbSi [V]')
+
     fig.tight_layout()
-
-
 ##==============================================================================
 ## EXPLORE TEMP. AT SAFETY OPTIMAL BIAS VOLTAGE
 ##==============================================================================

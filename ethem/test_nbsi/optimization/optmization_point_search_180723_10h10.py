@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sy
 from scipy.optimize import minimize, root
+from scipy.integrate import solve_ivp, odeint
 
 from tqdm import tqdm
 from config_ethem import eth, Tc
@@ -54,12 +55,6 @@ sseq = eth.System.sseq.subs(edict)
 sseq_list = list(sseq)
 sseq_gfun = sy.lambdify(param, sseq_list, modules="numpy")
 
-sseq_jac = sseq.jacobian(phi_vect)
-sseq_jac_gfun = sy.lambdify(param, sseq_jac, modules="numpy")
-
-cond = sseq[2]
-cond_gfun = sy.lambdify(param, cond, modules="numpy")
-
 #==============================================================================
 # ETEQ + PER
 #==============================================================================
@@ -78,62 +73,71 @@ theta = [0.05, 0.017] + x0
 theta_num = theta + [0.]
 
 print 'sseq :', sseq_gfun(*theta)
-print 'sseq_jac :', sseq_jac_gfun(*theta)
 print 'numeq :', numeq_gfun(*theta_num)
 
-v_array = 10**np.linspace(-3, 0, 50)
-t_array = np.linspace(0.010, 0.019, 50)
+v_array = 10**np.linspace(-3, 0, 100)
+t_array = np.linspace(0.017, 0.030, 100)
+#v_array = [1e-6]
+#t_array = [0.017]
+
+def aux(v,t):
+    A = lambda param_ss: sseq_gfun(v,t, *param_ss)
+    return A
+
+def aux_solve(v,t):
+    A = lambda y,t : sseq_gfun(v,t, *y)
+    return A
+
+X0 = [0.018, 0.018, 0.018, 0.]
+
+sol_root = root(aux(0.05,0.018), X0)
+print 'root :', sol_root.x
+
+#sol_solve = solve_ivp(aux_solve(0.5, 0.018), [0, 10.], [0.020, 0.018, 0.018, 0.],
+#                      t_eval=np.linspace(0, 10, 100),
+#                      method='LSODA')
+
+time = np.arange(0, 100, 0.1)
+sol_odeint = odeint(aux_solve(0.05, 0.018), X0, time)
+
+fig, ax = plt.subplots(nrows=4, num='check solve_ivp')
+
+for i,a in enumerate(ax):
+    a.plot(time, sol_odeint.T[i])
+
+fig, ax = plt.subplots(nrows=4, num='check power')
+powa = np.array([aux_solve(0.05, 0.018)(x, 0.) for x in sol_odeint])
+for i,a in enumerate(ax):
+    a.plot(time, powa.T[i])
 
 
-def sseq_solve(vbias, tcryo):
-
-    x0 = [tcryo, tcryo, tcryo, 0.]
-
-    def aux(param_ss):
-        p = [vbias, tcryo] + list(param_ss)
-        return sseq_gfun(*p), sseq_jac_gfun(*p)
-
-    sol = root(aux, x0, jac=True)
-
-#    x_return = np.append(sol.x, sol.fjac[2,2])
-    x_return = sol.x
-
-    if sol.success is False:
-        x_return = np.ones( len(x_return) ) * np.nan
-
-    return tuple(x_return)
-
-sseq_solve = np.vectorize(sseq_solve)
-
-v_mesh, t_mesh = np.meshgrid(v_array, t_array)
-
-sseq_mesh = sseq_solve(v_mesh, t_mesh)
-cond_mesh = cond_gfun(v_mesh, t_mesh, *sseq_mesh)
-
-fig_t = plt.figure('Temperature')
-ax_t = plt.axes(projection='3d')
-for i,c in enumerate( ('orange', 'green', 'blue') ):
-    ax_t.plot_wireframe(np.log10(v_mesh), t_mesh, sseq_mesh[i]-t_mesh,
-                        color=c, alpha=0.3)
-
-fig_v = plt.figure('Voltage')
-ax_v = plt.axes(projection='3d')
-ax_v.plot_wireframe(np.log10(v_mesh), t_mesh, sseq_mesh[-1])
-
-fig = plt.figure('Conductance')
-ax = plt.axes(projection='3d')
-ax.plot_wireframe(np.log10(v_mesh), t_mesh, cond_mesh)
-
-current = nbsi.current.subs(edict)
-current_gfun = sy.lambdify(param, current, "numpy")
-current_mesh = current_gfun(v_mesh, t_mesh, *sseq_mesh)
-
-fig = plt.figure('Current')
-ax = plt.axes(projection='3d')
-ax.plot_wireframe(np.log10(v_mesh), t_mesh, current_mesh-v_mesh/2.e9)
+print 'odeint :', sol_odeint[-1]
 
 
-
-
+#v_sol = list()
+#suc_sol = list()
+#
+#for v,t in tqdm(zip(v_array, t_array)):
+#
+#    t = 0.016
+#    x0 = [t, t, t, 0.]
+#
+##    def aux(param_ss):
+##        p = [i,t] + list(param_ss)
+##        return sseq_gfun(*p)
+#
+#    sol = root(aux(v,t), x0)
+#
+#    v_sol.append(sol.x[-1])
+#    suc_sol.append(sol.success)
+#
+#v_sol = np.array(v_sol)
+#suc_sol = np.array(suc_sol)
+#
+#plt.figure()
+#plt.loglog(v_array[suc_sol], v_sol[suc_sol], color='slateblue')
+#plt.loglog(v_array[np.logical_not(suc_sol)],
+#                   v_sol[np.logical_not(suc_sol)],
+#                   color='red')
 
 
