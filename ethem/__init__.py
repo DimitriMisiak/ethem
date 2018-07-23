@@ -9,7 +9,8 @@ Author:
 """
 
 from .convenience import *
-from .et_scheme import *
+from .core_classes import *
+from .et_classes import *
 #from .system_eq import *
 from .steady_state import *
 from .first_order import *
@@ -19,3 +20,4 @@ from .evaluation import *
 from .psd import *
 from .numerical_integration import *
 from .system_scheme import *
+from .system_method import *

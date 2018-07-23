@@ -150,8 +150,6 @@ class System(object):
         """ Call other classmethod to defines or update all the symbolic
         attributes of the System. Also, pretty_print thiese symbolic attributes
         in a txt file.
-
-        ### FIXME savepath useless ??
         """
 
         # printing the name of the method and pprint the symbolic expression.
@@ -167,11 +165,10 @@ class System(object):
         try:
 
             # creating save directory of the save file.
-            save_path = 'results/check_output.txt'
-            build_path(save_path)
+            build_path(savepath)
 
             # redirecting the printing to the txt file.
-            sys.stdout = open(save_path, 'w')
+            sys.stdout = open(savepath, 'w')
 
             # defining the attribute 'bath_list'
             System.bath_list = System.subclass_list(RealBath)
@@ -190,7 +187,7 @@ class System(object):
             # reverting to the original printing backend
             sys.stdout = original_stdout
             # for the user
-            print 'Building System Done.'
+            print 'Building System Done (written in {})'.format(savepath)
 
         finally:
             # even if an error occur, the priting backend is reverted to
@@ -231,8 +228,6 @@ class Bath(Element):
         """ Required for co-operative subclassing
         """
         super(Bath, self).__init__(label)
-
-#        self.label = label
 
         # listing the attached links, automatically set by the
         # link __init__ function.
@@ -319,72 +314,6 @@ class RealBath(Bath):
         return eq
 
 
-class Thermostat(Bath):
-    """ Bath subclass defining a object characterized by
-    its temperature.
-    This thermal object has its temperature as 'main_quant' and its power as
-    'main_flux'.
-    """
-    def __init__(self, label):
-        super(Thermostat, self).__init__(label)
-        self.temperature = sy.symbols('T_'+ self.label)
-        self.power = 0
-
-    @property
-    def main_quant(self):
-        return self.temperature
-
-    @property
-    def main_flux(self):
-        return self.power
-
-
-class Voltstat(Bath):
-    """ Bath subclass defining a object characterized by
-    its voltage.
-    This electric object has its voltage as 'main_quant' and its current as
-    'main_flux'.
-    """
-    def __init__(self, label):
-        super(Voltstat, self).__init__(label)
-        self.voltage = sy.symbols('V_'+ self.label)
-        self.current = 0
-
-    @property
-    def main_quant(self):
-        return self.voltage
-
-    @property
-    def main_flux(self):
-        return self.current
-
-
-class ThermalBath(Thermostat, RealBath):
-    """ Subclass of Thermostat and RealBath, which is defined
-    by its thermal capacity.
-    """
-    def __init__(self, label):
-        super(ThermalBath, self).__init__(label)
-        self.th_capacity = sy.symbols('C_'+self.label)
-
-    @property
-    def capacity(self):
-        return self.th_capacity
-
-
-class Capacitor(Voltstat, RealBath):
-    """ Subclass of Voltstat and RealBath, which is defined
-    by its electric capacity.
-    """
-    def __init__(self, label):
-        super(Capacitor, self).__init__(label)
-        self.el_capacity = sy.symbols('C_'+label)
-
-    @property
-    def capacity(self):
-        return self.el_capacity
-
-
 class Link(Element):
     """ Abstract Base Class which is the parent class for ThermalLink.
     It introduces the property 'main_flux' (representing
@@ -428,60 +357,3 @@ class Link(Element):
         - voltage for Coil classes (work with TES ?)
         """
         return
-
-
-class ThermalLink(Link):
-    """ Link subclass defining an thermal link characterized by
-    its conductivity and the power passing through.
-    The expression of the power is passed by default. Feel free to change it
-    once the ThermalLink object is created.
-    """
-    def __init__(self, from_bath, to_bath, label):
-
-        # can only attach ThermalLink to Thermostat
-        assert isinstance(from_bath, Thermostat)
-        assert isinstance(to_bath, Thermostat)
-
-        super(ThermalLink, self).__init__(from_bath, to_bath, label)
-
-        # default power expression
-        self.conductivity = sy.symbols('G_'+ self.label)
-        self.power = self.conductivity * (self.from_bath.temperature
-                                          - self.to_bath.temperature)
-
-    @property
-    def main_flux(self):
-        return self.power
-
-    @property
-    def conductance(self):
-        # default choice for the conductance
-        return (self.power).diff(self.from_bath.temperature)
-
-
-class Resistor(Link):
-    """ Link subclass defining an electric link characterized by
-    its resistivity and the current passing through.
-    The Resistor instances also possesses an attribute temperature in
-    prevision of the evaluation of the Johnson Noise.
-    """
-    def __init__(self, from_bath, to_bath, label):
-
-        # can only attach Resistor to Voltstat
-        assert isinstance(from_bath, Voltstat)
-        assert isinstance(to_bath, Voltstat)
-
-        super(Resistor, self).__init__(from_bath, to_bath, label)
-
-        self.resistivity = sy.symbols( 'R_' + self.label)
-
-        self.temperature = sy.symbols('T_R_' + self.label)
-
-    @property
-    def current(self):
-        return self.resistivity**-1 * (self.from_bath.voltage
-                                       - self.to_bath.voltage)
-
-    @property
-    def main_flux(self):
-        return self.current

@@ -9,7 +9,7 @@ scheme of the electro-thermal system.
 import pydot
 import Image
 
-from .et_scheme import System, Bath, Link
+from .core_classes import System, Bath, Link
 
 def display_scheme(fp='scheme.png'):
     """ Create and display the symbolic scheme of the System.

@@ -42,5 +42,6 @@ for i,a in enumerate(ax):
     a.plot(time, pulse[i])
     a.grid(True)
 
-ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9))
+ax[0].set_title('Sensitivity : {:.2f} nV/keV'.format(sens*1e9/2))
 fig.tight_layout()
+

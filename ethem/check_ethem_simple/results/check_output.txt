@@ -1,0 +1,32 @@
+
+build_phi_vect :
+
+[T_abso]
+
+build_capacity_matrix :
+
+[C_abso]
+
+build_steady_state_eq :
+
+[-G*(T_abso - T_cryo) - G_2*(T_abso - T_cryo2)]
+
+build_eletro_thermal_eq :
+
+[-G*(T_abso - T_cryo) - G_2*(T_abso - T_cryo2)]
+[---------------------------------------------]
+[                    C_abso                   ]
+
+build_coupling_matrix :
+
+[-(-G - G_2) ]
+[------------]
+[   C_abso   ]
+
+build_admittance_mat :
+
+[       /           -G - G_2\]
+[C_abso*|2*I*pi*f - --------|]
+[       \            C_abso /]
+
+ END OF PPRINT.
