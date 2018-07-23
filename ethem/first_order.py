@@ -10,7 +10,7 @@ import numpy as np
 import sympy as sy
 
 from .evaluation import lambda_fun_mat, lambda_fun
-from .et_scheme import System
+from .core_classes import System
 from .noise import noise_flux_fun, noise_obs_fun
 
 

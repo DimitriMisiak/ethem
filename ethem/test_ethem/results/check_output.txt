@@ -1,0 +1,106 @@
+
+build_phi_vect :
+
+[ T_abso ]
+[        ]
+[T_phonon]
+[        ]
+[ T_ntd  ]
+[        ]
+[ V_wire ]
+
+build_capacity_matrix :
+
+[C_abso     0        0      0   ]
+[                               ]
+[  0     C_phonon    0      0   ]
+[                               ]
+[  0        0      C_ntd    0   ]
+[                               ]
+[  0        0        0    C_wire]
+
+build_steady_state_eq :
+
+[                           -P_glue(T_abso, T_phonon)                            ]
+[                                                                                ]
+[-P_epcoup(T_phonon, T_ntd) + P_glue(T_abso, T_phonon) - P_leak(T_phonon, T_cryo)]
+[                                                                                ]
+[                           P_epcoup(T_phonon, T_ntd)                            ]
+[                                                                                ]
+[                             V_wire   V_bias - V_wire                           ]
+[                           - ------ + ---------------                           ]
+[                             R_ntd         R_load                               ]
+
+build_eletro_thermal_eq :
+
+[                           -P_glue(T_abso, T_phonon)                            ]
+[                           --------------------------                           ]
+[                                     C_abso                                     ]
+[                                                                                ]
+[-P_epcoup(T_phonon, T_ntd) + P_glue(T_abso, T_phonon) - P_leak(T_phonon, T_cryo)]
+[--------------------------------------------------------------------------------]
+[                                    C_phonon                                    ]
+[                                                                                ]
+[                           P_epcoup(T_phonon, T_ntd)                            ]
+[                           -------------------------                            ]
+[                                     C_ntd                                      ]
+[                                                                                ]
+[                             V_wire   V_bias - V_wire                           ]
+[                           - ------ + ---------------                           ]
+[                             R_ntd         R_load                               ]
+[                           --------------------------                           ]
+[                                     C_wire                                     ]
+
+build_coupling_matrix :
+
+[    d                                                                              d                                                                                                                                    ]
+[ -------(P_glue(T_abso, T_phonon))                                             ---------(P_glue(T_abso, T_phonon))                                                                                                      ]
+[ dT_abso                                                                       dT_phonon                                                                                                                                ]
+[ ---------------------------------                                             -----------------------------------                                                             0                             0          ]
+[               C_abso                                                                         C_abso                                                                                                                    ]
+[                                                                                                                                                                                                                        ]
+[     d                                 /      d                                      d                                     d                              \      d                                                      ]
+[- -------(P_glue(T_abso, T_phonon))   -|- ---------(P_epcoup(T_phonon, T_ntd)) + ---------(P_glue(T_abso, T_phonon)) - ---------(P_leak(T_phonon, T_cryo))|    ------(P_epcoup(T_phonon, T_ntd))                        ]
+[  dT_abso                              \  dT_phonon                              dT_phonon                             dT_phonon                          /    dT_ntd                                                   ]
+[------------------------------------  ----------------------------------------------------------------------------------------------------------------------   ---------------------------------             0          ]
+[              C_phonon                                                                       C_phonon                                                                       C_phonon                                    ]
+[                                                                                                                                                                                                                        ]
+[                                                                                   d                                                                              d                                                     ]
+[                                                                             - ---------(P_epcoup(T_phonon, T_ntd))                                           - ------(P_epcoup(T_phonon, T_ntd))                       ]
+[                                                                               dT_phonon                                                                        dT_ntd                                                  ]
+[                 0                                                           ---------------------------------------                                          ------------------------------------           0          ]
+[                                                                                              C_ntd                                                                          C_ntd                                      ]
+[                                                                                                                                                                                                                        ]
+[                                                                                                                                                                                                     /    1       1   \ ]
+[                                                                                                                                                                                                    -|- ----- - ------| ]
+[                                                                                                                                                                                                     \  R_ntd   R_load/ ]
+[                 0                                                                              0                                                                              0                    --------------------]
+[                                                                                                                                                                                                           C_wire       ]
+
+build_admittance_mat :
+
+[       /              d                             \                                                                                                                                                                                                                                      ]
+[       |           -------(P_glue(T_abso, T_phonon))|                                                                                                                                                                                                                                      ]
+[       |           dT_abso                          |                                                        d                                                                                                                                                                             ]
+[C_abso*|2*I*pi*f + ---------------------------------|                                                    ---------(P_glue(T_abso, T_phonon))                                                                              0                                             0                  ]
+[       \                         C_abso             /                                                    dT_phonon                                                                                                                                                                         ]
+[                                                                                                                                                                                                                                                                                           ]
+[                                                                /                 d                                      d                                     d                              \                                                                                            ]
+[                                                                |           - ---------(P_epcoup(T_phonon, T_ntd)) + ---------(P_glue(T_abso, T_phonon)) - ---------(P_leak(T_phonon, T_cryo))|                                                                                            ]
+[              d                                                 |             dT_phonon                              dT_phonon                             dT_phonon                          |             d                                                                              ]
+[         - -------(P_glue(T_abso, T_phonon))           C_phonon*|2*I*pi*f - ------------------------------------------------------------------------------------------------------------------|           ------(P_epcoup(T_phonon, T_ntd))                             0                  ]
+[           dT_abso                                              \                                                                C_phonon                                                     /           dT_ntd                                                                           ]
+[                                                                                                                                                                                                                                                                                           ]
+[                                                                                                                                                                                                       /             d                              \                                      ]
+[                                                                                                                                                                                                       |           ------(P_epcoup(T_phonon, T_ntd))|                                      ]
+[                                                                                                              d                                                                                        |           dT_ntd                           |                                      ]
+[                          0                                                                             - ---------(P_epcoup(T_phonon, T_ntd))                                                   C_ntd*|2*I*pi*f - ---------------------------------|                   0                  ]
+[                                                                                                          dT_phonon                                                                                    \                         C_ntd              /                                      ]
+[                                                                                                                                                                                                                                                                                           ]
+[                                                                                                                                                                                                                                                              /               1       1   \]
+[                                                                                                                                                                                                                                                              |           - ----- - ------|]
+[                                                                                                                                                                                                                                                              |             R_ntd   R_load|]
+[                          0                                                                                               0                                                                                               0                            C_wire*|2*I*pi*f - ----------------|]
+[                                                                                                                                                                                                                                                              \                C_wire     /]
+
+ END OF PPRINT.

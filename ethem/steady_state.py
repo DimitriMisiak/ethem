@@ -9,7 +9,7 @@ Functions to access the steady state.
 import numpy as np
 import sympy as sy
 from scipy.optimize import root
-from .et_scheme import System
+from .core_classes import System
 
 def solve_sse(eval_dict, x0, method=None, printsuccess=False):
     """ Solve the steady-state system for the given system characteristics.
@@ -40,7 +40,6 @@ def solve_sse(eval_dict, x0, method=None, printsuccess=False):
 
     # Steady state equations
     sseq = System.sseq.subs(eval_dict)
-#    sseq = sse(bath_list).subs(eval_dict)
 
     # checking that all symbols the desired symbols are evaluated
     # if an error is raised, a term is missing from the given dictionnary
@@ -61,3 +60,68 @@ def solve_sse(eval_dict, x0, method=None, printsuccess=False):
         print sol.success
 
     return sol.x
+#
+#
+#def new_solve_sse(eval_dict, x0, method=None, printsuccess=False):
+#    """ Solve the steady-state system for the given system characteristics.
+#
+#    Parameters:
+#    ===========
+#    eval_dict :dict
+#        Contains the evaluation values for the system characteristics symbols.
+#    x0 : array_like
+#        Initial vector for the resolution.
+#    method : str, optional
+#        Type of solver. See scipy.optimize.root for more precision. By default,
+#        set to None which uses 'lm' method.
+#
+#    Returns:
+#    ========
+#    sol.x : numpy.ndarray
+#        Solution vector, returned in the same order as bath_list.
+#
+#    See also:
+#    =========
+#    scipy.optimize.root
+#    """
+#    # Quantities to be evaluated by the resolution
+#    phi = System.phi_vect
+#    # checking that the initial vector is adapted in length
+#    assert len(phi) == len(x0)
+#
+#    # Steady state equations
+##    sseq = System.sseq.subs(eval_dict)
+#    key_list = list()
+#    value_list = list()
+#    for k,v in eval_dict.iteritems():
+#        key_list.append(k)
+#        value_list.append(v)
+#
+#    param = list(phi) + key_list
+#
+#    funk =
+#
+#    # checking that all symbols the desired symbols are evaluated
+#    # if an error is raised, a term is missing from the given dictionnary
+#    assert set(phi) == set(sseq.free_symbols)
+#
+#    # process the sympy equations into a function adaptated to scipy root
+#    funk = sy.lambdify(phi, sseq, 'numpy')
+#    system_eq = lambda x: np.squeeze(funk(*x))
+#
+#    if method is None:
+#        method = 'lm'
+#
+#    # Resolution with scipy.optimize.root
+#    sol = root(system_eq, x0, method=method,
+#               options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
+#
+#    if printsuccess == True:
+#        print sol.success
+#
+#    return sol.x
+#
+#
+
+
+

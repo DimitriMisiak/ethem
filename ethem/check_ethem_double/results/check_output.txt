@@ -1,0 +1,50 @@
+
+build_phi_vect :
+
+[T_abso ]
+[       ]
+[T_abso2]
+
+build_capacity_matrix :
+
+[C_abso     0   ]
+[               ]
+[  0     C_abso2]
+
+build_steady_state_eq :
+
+[ -G*(T_abso - T_cryo) - G_2*(T_abso - T_abso2)  ]
+[                                                ]
+[G_2*(T_abso - T_abso2) - G_3*(T_abso2 - T_cryo2)]
+
+build_eletro_thermal_eq :
+
+[ -G*(T_abso - T_cryo) - G_2*(T_abso - T_abso2)  ]
+[ ---------------------------------------------  ]
+[                     C_abso                     ]
+[                                                ]
+[G_2*(T_abso - T_abso2) - G_3*(T_abso2 - T_cryo2)]
+[------------------------------------------------]
+[                    C_abso2                     ]
+
+build_coupling_matrix :
+
+[-(-G - G_2)       -G_2      ]
+[------------      ------    ]
+[   C_abso         C_abso    ]
+[                            ]
+[   -G_2       -(-G_2 - G_3) ]
+[  -------     --------------]
+[  C_abso2        C_abso2    ]
+
+build_admittance_mat :
+
+[       /           -G - G_2\                                 ]
+[C_abso*|2*I*pi*f - --------|               -G_2              ]
+[       \            C_abso /                                 ]
+[                                                             ]
+[                                      /           -G_2 - G_3\]
+[            -G_2              C_abso2*|2*I*pi*f - ----------|]
+[                                      \            C_abso2  /]
+
+ END OF PPRINT.

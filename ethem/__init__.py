@@ -8,7 +8,9 @@ Author:
     Dimitri Misiak (misiak@ipnl.in2p3.fr)
 """
 
-from .et_scheme import *
+from .convenience import *
+from .core_classes import *
+from .et_classes import *
 #from .system_eq import *
 from .steady_state import *
 from .first_order import *
@@ -17,3 +19,5 @@ from .noise import *
 from .evaluation import *
 from .psd import *
 from .numerical_integration import *
+from .system_scheme import *
+from .system_method import *

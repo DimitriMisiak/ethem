@@ -31,7 +31,7 @@ phntd = eth.ThermalBath('p')
 ### ntd thermal bath
 thntd = eth.ThermalBath('ntd')
 ### thermal leak
-leak = eth.ThermalLink(phntd, cryo, 'leak')
+leak = eth.ThermalLink(abso, cryo, 'leak')
 ### glue between absorber and ntd
 glue = eth.ThermalLink(abso, phntd, 'glue')
 ### ep coupling
@@ -155,10 +155,10 @@ eth.System.build_sym()
 #==============================================================================
 # EVENT PERTURBATION
 #==============================================================================
-E, sth, epsa, epse, t0 = sy.symbols('E, sth, epsa, epse, t0')
+E, sth, eps, t0 = sy.symbols('E, sth, eps, t0')
 per = sy.zeros(len(eth.System.bath_list), 1)
-per[0] = epsa * eth.event_power(E, sth, t)
-per[2] = epse * eth.event_power(E, sth, t)
+per[0] = (1.-eps) * eth.event_power(E, sth, t)
+per[2] = eps * eth.event_power(E, sth, t)
 
 #==============================================================================
 # EVALUATION DICT
@@ -171,27 +171,28 @@ evad_const = {'kB' : 1.3806485e-23,
 
 evad_sys = {load.resistivity : 2e9,
             load.temperature :0.02,
-            leak.surface : 40.,
-            glue.cond_alpha : 1.46e-4,
+            leak.surface : 25.,
+            glue.cond_alpha : 1.46e-2,
             glue.cond_expo : 3.5,
-            epcoup.cond_alpha : 45.67,
+            epcoup.cond_alpha : 100,
             epcoup.cond_expo : 6.,
-            leak.cond_alpha : 7.81e-05,
+            leak.cond_alpha : 5e-5,
             leak.cond_expo : 4.,
             capa.capacity : 2.94e-10,
-            abso.mass : 255.36,
-            elntd.length :0.3,
-            elntd.width :0.5,
+            abso.mass : 820.,
+            elntd.length : 0.4,
+            elntd.width : 0.4,
             elntd.height :0.1,
-            R0 : 0.5,
-            T0 : 5.29,
+            R0 : 7.2,
+            T0 : 3.3,
             cryo.temperature : 18e-3,
-            bias.voltage : 0.5}
+            bias.voltage : 4.}
 
-evad_per = {sth : 4.03e-3,
-            E : 1e3 * 1.6e-19,
-            epsa : 1.0-2.02e-1,
-            epse : 2.02e-1,
+evad_per = {sth : 1e-20,
+            E : 2e3 * 1.6e-19,
+            eps : 0.,
+#            eps : 0.99,
+#            eps : 0.2,
             t0 : 0.0}
 
 evad_noise = {e_amp :3.27e-9,

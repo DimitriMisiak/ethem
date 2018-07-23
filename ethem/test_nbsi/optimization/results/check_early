@@ -1,0 +1,106 @@
+
+build_phi_vect :
+
+[ T_a  ]
+[      ]
+[ T_w  ]
+[      ]
+[T_nbsi]
+[      ]
+[ V_f  ]
+
+build_capacity_matrix :
+
+[C_a   0     0      0 ]
+[                     ]
+[ 0   C_w    0      0 ]
+[                     ]
+[ 0    0   C_nbsi   0 ]
+[                     ]
+[ 0    0     0     C_f]
+
+build_steady_state_eq :
+
+[                   -P_glue(T_a, T_w)                    ]
+[                                                        ]
+[-P_ep(T_w, T_nbsi) + P_glue(T_a, T_w) - P_leak(T_w, T_b)]
+[                                                        ]
+[                   P_ep(T_w, T_nbsi)                    ]
+[                                                        ]
+[                     V_f     V_b - V_f                  ]
+[                  - ------ + ---------                  ]
+[                    R_nbsi      R_L                     ]
+
+build_eletro_thermal_eq :
+
+[                   -P_glue(T_a, T_w)                    ]
+[                   ------------------                   ]
+[                          C_a                           ]
+[                                                        ]
+[-P_ep(T_w, T_nbsi) + P_glue(T_a, T_w) - P_leak(T_w, T_b)]
+[--------------------------------------------------------]
+[                          C_w                           ]
+[                                                        ]
+[                   P_ep(T_w, T_nbsi)                    ]
+[                   -----------------                    ]
+[                         C_nbsi                         ]
+[                                                        ]
+[                     V_f     V_b - V_f                  ]
+[                  - ------ + ---------                  ]
+[                    R_nbsi      R_L                     ]
+[                  --------------------                  ]
+[                          C_f                           ]
+
+build_coupling_matrix :
+
+[  d                                                     d                                                                                                    ]
+[ ----(P_glue(T_a, T_w))                                ----(P_glue(T_a, T_w))                                                                                ]
+[ dT_a                                                  dT_w                                                                                                  ]
+[ ----------------------                                ----------------------                                             0                        0         ]
+[          C_a                                                   C_a                                                                                          ]
+[                                                                                                                                                             ]
+[   d                        /   d                         d                        d                    \       d                                            ]
+[- ----(P_glue(T_a, T_w))   -|- ----(P_ep(T_w, T_nbsi)) + ----(P_glue(T_a, T_w)) - ----(P_leak(T_w, T_b))|    -------(P_ep(T_w, T_nbsi))                      ]
+[  dT_a                      \  dT_w                      dT_w                     dT_w                  /    dT_nbsi                                         ]
+[-------------------------  -------------------------------------------------------------------------------   --------------------------            0         ]
+[           C_w                                                   C_w                                                    C_w                                  ]
+[                                                                                                                                                             ]
+[                                                        d                                                        d                                           ]
+[                                                     - ----(P_ep(T_w, T_nbsi))                              - -------(P_ep(T_w, T_nbsi))                     ]
+[                                                       dT_w                                                   dT_nbsi                                        ]
+[            0                                        --------------------------                             -----------------------------          0         ]
+[                                                               C_nbsi                                                   C_nbsi                               ]
+[                                                                                                                                                             ]
+[                                                                                                                                            /    1       1 \ ]
+[                                                                                                                                           -|- ------ - ---| ]
+[                                                                                                                                            \  R_nbsi   R_L/ ]
+[            0                                                     0                                                       0                ------------------]
+[                                                                                                                                                  C_f        ]
+
+build_admittance_mat :
+
+[    /            d                    \                                                                                                                                                                               ]
+[    |           ----(P_glue(T_a, T_w))|                                                                                                                                                                               ]
+[    |           dT_a                  |                                      d                                                                                                                                        ]
+[C_a*|2*I*pi*f + ----------------------|                                     ----(P_glue(T_a, T_w))                                                           0                                        0               ]
+[    \                    C_a          /                                     dT_w                                                                                                                                      ]
+[                                                                                                                                                                                                                      ]
+[                                             /              d                         d                        d                    \                                                                                 ]
+[                                             |           - ----(P_ep(T_w, T_nbsi)) + ----(P_glue(T_a, T_w)) - ----(P_leak(T_w, T_b))|                                                                                 ]
+[          d                                  |             dT_w                      dT_w                     dT_w                  |               d                                                                 ]
+[       - ----(P_glue(T_a, T_w))          C_w*|2*I*pi*f - ---------------------------------------------------------------------------|            -------(P_ep(T_w, T_nbsi))                           0               ]
+[         dT_a                                \                                               C_w                                    /            dT_nbsi                                                              ]
+[                                                                                                                                                                                                                      ]
+[                                                                                                                                              /              d                      \                                 ]
+[                                                                                                                                              |           -------(P_ep(T_w, T_nbsi))|                                 ]
+[                                                                             d                                                                |           dT_nbsi                   |                                 ]
+[                   0                                                      - ----(P_ep(T_w, T_nbsi))                                    C_nbsi*|2*I*pi*f - --------------------------|                 0               ]
+[                                                                            dT_w                                                              \                     C_nbsi          /                                 ]
+[                                                                                                                                                                                                                      ]
+[                                                                                                                                                                                           /               1       1 \]
+[                                                                                                                                                                                           |           - ------ - ---|]
+[                                                                                                                                                                                           |             R_nbsi   R_L|]
+[                   0                                                                  0                                                                      0                         C_f*|2*I*pi*f - --------------|]
+[                                                                                                                                                                                           \                C_f      /]
+
+ END OF PPRINT.
