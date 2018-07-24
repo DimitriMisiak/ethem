@@ -19,7 +19,7 @@ import ethem as eth
 # SYSTEM
 #==============================================================================
 ### Defining time and frequency variables
-time, freq = eth.System.t, eth.System.f
+time, freq = eth.System.time, eth.System.freq
 
 ### Defining the thermal system
 ### cryostat
@@ -47,7 +47,8 @@ ce_nbsi = sy.symbols('ce_nbsi')
 nbsi.th_capacity = nbsi.volume * ce_nbsi
 
 # Joule Power from nbsi resistor to nbsi electron bath
-nbsi.power = nbsi.resistivity
+nbsi.current = sy.symbols('i_bias')
+nbsi.power = nbsi.resistivity * nbsi.current**2
 
 # Power expression in epcoup link
 epcoup.cond_alpha, epcoup.cond_expo = sy.symbols('g_ep, n_ep')
@@ -80,7 +81,8 @@ evad_sys = {
         rho : 20e-6, #Ohms/m
         Tc : 0.018, #K
         sig : 0.0005, #K
-        cryo.temperature : 18e-3, #K
+        cryo.temperature : 16e-3, #K
+        nbsi.current : 1.5e-10 #A
 }
 
 evad = dict()

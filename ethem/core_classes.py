@@ -14,8 +14,6 @@ import abc
 import sys
 import os
 
-from .convenience import build_path
-
 class System(object):
     """ Un-instanced class representing the system environment in which the
     different Element instances interact with each others.
@@ -25,7 +23,7 @@ class System(object):
     elements_list = []
 
     # time and frequency symbols
-    t, f = sy.symbols('t, f')
+    time, freq = sy.symbols('t, f')
 
     @classmethod
     def checkpoint(cls):
@@ -136,7 +134,7 @@ class System(object):
         """
         cm_mat = System.coupling_matrix
 
-        deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * System.f
+        deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * System.freq
 
         capa_matrix = System.capacity_matrix
 
@@ -164,8 +162,8 @@ class System(object):
         # printing into a txt file.
         try:
 
-            # creating save directory of the save file.
-            build_path(savepath)
+#            # creating save directory of the save file.
+#            build_path(savepath)
 
             # redirecting the printing to the txt file.
             sys.stdout = open(savepath, 'w')
@@ -307,7 +305,7 @@ class RealBath(Bath):
         power -= sum([lin.main_flux for lin in self.link_out])
 
         # time derivative
-        var = self.capacity * sy.Derivative(self.main_quant, System.t)
+        var = self.capacity * sy.Derivative(self.main_quant, System.time)
 
         # equation in bath
         eq = sy.Eq(var, power, evaluate=False)

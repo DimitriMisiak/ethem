@@ -9,7 +9,8 @@ build_capacity_matrix :
 
 build_steady_state_eq :
 
-[                          /   n_ep         n_ep\                L_nbsi*rho             ]
+[                                                                         2             ]
+[                          /   n_ep         n_ep\            L_nbsi*i_bias *rho         ]
 [H_nbsi*L_nbsi*W_nbsi*g_ep*\T_b     - T_nbsi    / + ------------------------------------]
 [                                                                 /     -(T_nbsi - Tc) \]
 [                                                                 |     ---------------|]
@@ -18,7 +19,8 @@ build_steady_state_eq :
 
 build_eletro_thermal_eq :
 
-[                          /   n_ep         n_ep\                L_nbsi*rho             ]
+[                                                                         2             ]
+[                          /   n_ep         n_ep\            L_nbsi*i_bias *rho         ]
 [H_nbsi*L_nbsi*W_nbsi*g_ep*\T_b     - T_nbsi    / + ------------------------------------]
 [                                                                 /     -(T_nbsi - Tc) \]
 [                                                                 |     ---------------|]
@@ -29,10 +31,10 @@ build_eletro_thermal_eq :
 
 build_coupling_matrix :
 
-[ /                                                                 -(T_nbsi - Tc)        \ ]
-[ |                                                                 ---------------       | ]
-[ |                      n_ep                                             sig             | ]
-[ |  H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep          L_nbsi*rho*e                      | ]
+[ /                                                                     -(T_nbsi - Tc)    \ ]
+[ |                                                                     ---------------   | ]
+[ |                      n_ep                                    2            sig         | ]
+[ |  H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep      L_nbsi*i_bias *rho*e                  | ]
 [-|- ----------------------------------------- + -----------------------------------------| ]
 [ |                    T_nbsi                                                            2| ]
 [ |                                                                /     -(T_nbsi - Tc) \ | ]
@@ -44,10 +46,10 @@ build_coupling_matrix :
 
 build_admittance_mat :
 
-[                             /                                                                            -(T_nbsi - Tc)        \]
-[                             |                                                                            ---------------       |]
-[                             |                                 n_ep                                             sig             |]
-[                             |             H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep          L_nbsi*rho*e                      |]
+[                             /                                                                                -(T_nbsi - Tc)    \]
+[                             |                                                                                ---------------   |]
+[                             |                                 n_ep                                    2            sig         |]
+[                             |             H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep      L_nbsi*i_bias *rho*e                  |]
 [                             |           - ----------------------------------------- + -----------------------------------------|]
 [                             |                               T_nbsi                                                            2|]
 [                             |                                                                           /     -(T_nbsi - Tc) \ |]

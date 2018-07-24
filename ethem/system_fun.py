@@ -14,7 +14,6 @@ import abc
 import sys
 import os
 
-from .convenience import build_path
 from .core_classes import System
 from .et_classes import ThermalBath, ThermalLink
 
@@ -32,3 +31,4 @@ def dynamic_check(eval_dict):
                     e.name,
                     str(e.conductance), e.conductance.subs(eval_dict)
             )
+
