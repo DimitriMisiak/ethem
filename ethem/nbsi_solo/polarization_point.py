@@ -16,6 +16,7 @@ sys.path.append( dirname(dirname(dirname(__file__))) )
 import ethem as eth
 
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 from scipy.integrate import odeint
 from scipy.optimize import root
 import numpy as np
@@ -25,8 +26,8 @@ from config_nbsi_solo import evad, nbsi, cryo
 plt.close('all')
 
 
-ib = 1e-10
-tc = 0.017
+ib = 1.5e-10
+tc = 0.016
 
 #evad.update({nbsi.current : ib,
 #             cryo.temperature : tc})
@@ -45,18 +46,108 @@ eteq_list = list(eteq_num)
 eteq_fun = sy.lambdify(param, eteq_list, 'numpy')
 
 t0 = np.random.uniform(0.010, 0.030)
+#t0 = 0.0
 
-print eteq_fun(ib, tc, t0)
+time_array = np.linspace(0., 10., 10)
 
-#time_array = np.linspace(0., 10., 10)
-#eteq_aux = lambda y,t: eteq_fun(*y)
-#eteq_aux_root = lambda y: eteq_fun(*y)
-#
-#t0 = np.random.uniform(0.010, 0.030)
-#inte = odeint(eteq_aux, [t0], time_array)
-#
-#t_conv = inte[-1]
-#
-#sol = root(eteq_aux_root, t_conv)
-#
-#print sol
+@np.vectorize
+def ss_solve(current, temp, t0=0.0):
+    eteq_aux0 = lambda y: eteq_fun(current, temp, *y)
+    eteq_aux1 = lambda y,t: eteq_aux0(y)
+
+    inte = odeint(eteq_aux1, [t0], time_array)
+
+    t_conv = inte[-1]
+
+    sol = root(eteq_aux0, t_conv)
+
+#    if not sol.success:
+#        print ('Success: {}, Current: {:.2e}, Temperature: {:.4e}, '
+#               'Init: {:.3f}').format(
+#                sol.success, current, temp, t0
+#        )
+
+    return sol.x
+
+
+i_array = 10**np.linspace(-11, -9, 50)
+t_array = np.linspace(0.015, 0.020, 50)
+
+sol_t_R = ss_solve(i_array, tc, t0=0.0)
+sol_t_L = ss_solve(i_array, tc, t0=0.1)
+plt.figure('current check')
+plt.plot(i_array, sol_t_R, color='red', label='to right')
+plt.plot(i_array, sol_t_L, color='blue', label='to left')
+plt.xscale('log')
+plt.legend()
+plt.grid(True, which='both')
+
+#sol_t_R = ss_solve(ib, t_array, t0=0.0)
+#sol_t_L = ss_solve(ib, t_array, t0=0.1)
+#plt.figure('temp check')
+#plt.plot(t_array, sol_t_R, color='red', label='to right')
+#plt.plot(t_array, sol_t_L, color='blue', label='to left')
+#plt.grid(True, which='both')
+#plt.legend()
+
+
+i_mesh, t_mesh = np.meshgrid(i_array, t_array)
+
+sol_mesh_R = ss_solve(i_mesh, t_mesh, t0=0.0)
+sol_mesh_L = ss_solve(i_mesh, t_mesh, t0=0.1)
+
+fig = plt.figure('meshplot')
+ax = plt.subplot(projection='3d')
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_R, color='red', alpha=0.3)
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_L, color='blue', alpha=0.3)
+
+
+### NBSI RESISTANCE
+res = nbsi.resistivity
+res_num = res.subs(evad)
+res_fun = sy.lambdify(param, res_num, 'numpy')
+
+res_R = res_fun(i_array, tc, sol_t_R)
+res_L = res_fun(i_array, tc, sol_t_L)
+
+plt.figure('nbsi resistance')
+plt.plot(i_array, res_R, color='red', label='to right')
+plt.plot(i_array, res_L, color='blue', label='to left')
+plt.xscale('log')
+plt.legend()
+plt.grid(True, which='both')
+
+res_mesh_R = res_fun(i_mesh, t_mesh, sol_mesh_R)
+res_mesh_L = res_fun(i_mesh, t_mesh, sol_mesh_L)
+
+fig = plt.figure('nbsi resistance meshplot')
+ax = plt.subplot(projection='3d')
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, res_mesh_R, color='red', alpha=0.3)
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, res_mesh_L, color='blue', alpha=0.3)
+
+
+### NBSI VOLTAGE
+volt = nbsi.resistivity * nbsi.current
+volt_num = volt.subs(edict)
+volt_fun = sy.lambdify(param, volt_num, 'numpy')
+
+volt_R = volt_fun(i_array, tc, sol_t_R)
+volt_L = volt_fun(i_array, tc, sol_t_L)
+
+plt.figure('nbsi voltage')
+plt.plot(i_array, volt_R, color='red', label='to right')
+plt.plot(i_array, volt_L, color='blue', label='to left')
+plt.xscale('log')
+plt.legend()
+plt.grid(True, which='both')
+
+volt_mesh_R = volt_fun(i_mesh, t_mesh, sol_mesh_R)
+volt_mesh_L = volt_fun(i_mesh, t_mesh, sol_mesh_L)
+
+fig = plt.figure('nbsi voltage meshplot')
+ax = plt.subplot(projection='3d')
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, np.log10(volt_mesh_R), color='red', alpha=0.3)
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, np.log10(volt_mesh_L), color='blue', alpha=0.3)
+
+
+
