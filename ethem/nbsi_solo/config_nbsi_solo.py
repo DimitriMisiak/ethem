@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Config file for the test detector using NbSi technology.
+Basically set up the simulation of the detector.
 
 @author: misiak
 """
@@ -64,6 +65,13 @@ epcoup.power = eth.kapitsa_power(nbsi.volume*epcoup.cond_alpha,
 eth.System.build_sym()
 
 #==============================================================================
+# EVENT PERTURBATION
+#==============================================================================
+E, sth, t0 = sy.symbols('E, sth, t0')
+per = sy.zeros(len(eth.System.bath_list), 1)
+per[0] = eth.event_power(E, sth, time)
+
+#==============================================================================
 # EVALUATION DICT
 #==============================================================================
 evad_const = {
@@ -85,6 +93,11 @@ evad_sys = {
         nbsi.current : 1.5e-10 #A
 }
 
+evad_per = {sth : 4.03e-3, #s
+            E : 1e3 * 1.6e-19, #J
+            t0 : 0.0}
+
 evad = dict()
 evad.update(evad_const)
 evad.update(evad_sys)
+evad.update(evad_per)

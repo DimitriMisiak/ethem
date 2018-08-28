@@ -1,7 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Config file for the test detector using NbSi technology.
+Illustrate how the steady state is resolved.
+1st figure : steady-state resolved from two different initial states, which
+    leads to two different solution.
+2nd figure : check the convergence progress on the steady-state integration
+    for randomly-chosen initial states.
 
 @author: misiak
 """

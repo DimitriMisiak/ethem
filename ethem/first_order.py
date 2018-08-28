@@ -35,7 +35,7 @@ def impedance_matrix_fun(eval_dict):
     """
     cimeq = System.admittance_matrix
     cimeq_num = cimeq.subs(eval_dict)
-    cimeq_funk = sy.lambdify(System.f, cimeq_num, modules="numpy")
+    cimeq_funk = sy.lambdify(System.freq, cimeq_num, modules="numpy")
 
     cimeq_fun = lambda f: np.linalg.inv(lambda_fun_mat(cimeq_funk, f))
 
@@ -61,7 +61,7 @@ def per_fft(per):
 
     # apply the fourier transform on each term
     for k, p in enumerate(per):
-        perf[k] = sy.fourier_transform(p, System.t, System.f)
+        perf[k] = sy.fourier_transform(p, System.time, System.freq)
 
     return perf
 
@@ -71,7 +71,7 @@ def per_fft_fun(per, eval_dict, fs):
     """
     perf = per_fft(per)
     perf_num = perf.subs(eval_dict) * fs
-    perf_fun_simple = sy.lambdify(System.f, perf_num, modules="numpy")
+    perf_fun_simple = sy.lambdify(System.freq, perf_num, modules="numpy")
 
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 
