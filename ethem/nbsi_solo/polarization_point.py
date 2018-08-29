@@ -98,10 +98,10 @@ i_mesh, t_mesh = np.meshgrid(i_array, t_array)
 sol_mesh_R = ss_solve(i_mesh, t_mesh, t0=0.0)
 sol_mesh_L = ss_solve(i_mesh, t_mesh, t0=0.1)
 
-#fig = plt.figure('nbsi temperature meshplot')
-#ax = plt.subplot(projection='3d')
-#ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_R, color='red', alpha=0.3)
-#ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_L, color='blue', alpha=0.3)
+fig = plt.figure('nbsi temperature meshplot')
+ax = plt.subplot(projection='3d')
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_R, color='red', alpha=0.3)
+ax.plot_wireframe(np.log10(i_mesh), t_mesh, sol_mesh_L, color='blue', alpha=0.3)
 
 
 #### NBSI RESISTANCE
@@ -234,30 +234,30 @@ ax.plot_wireframe(np.log10(i_mesh), t_mesh, np.log10(tau_mesh_L), color='blue', 
 
 
 
-from corner import corner
-
-tau_fix = tau_mesh_R
-tau_fix[tau_fix<0] = 10000.
-
-AAA = np.log10(tau_fix).ravel()
-NNN = np.random.normal(size=(900,))
-
-ravel_array = (
-        np.log10(i_mesh).ravel(),
-        t_mesh.ravel(),
-        sol_mesh_R.ravel(),
-        AAA,
-        cond_mesh_R.ravel(),
-)
-
-labels = ('ibias', 'tcryo', 'tnbsi', 'tau', 'cond')
-
-samples = np.vstack(ravel_array)
-
-fig_corner = corner(samples.T, bins=50, smooth=1,
-                                labels=['{}'.format(l) for l in labels],
-                                quantiles=[0.16, 0.5, 0.84], show_titles=True,
-                                title_kwargs={"fontsize": 12})
+#from corner import corner
+#
+#tau_fix = tau_mesh_R
+#tau_fix[tau_fix<0] = 10000.
+#
+#AAA = np.log10(tau_fix).ravel()
+#NNN = np.random.normal(size=(900,))
+#
+#ravel_array = (
+#        np.log10(i_mesh).ravel(),
+#        t_mesh.ravel(),
+#        sol_mesh_R.ravel(),
+#        AAA,
+#        cond_mesh_R.ravel(),
+#)
+#
+#labels = ('ibias', 'tcryo', 'tnbsi', 'tau', 'cond')
+#
+#samples = np.vstack(ravel_array)
+#
+#fig_corner = corner(samples.T, bins=50, smooth=1,
+#                                labels=['{}'.format(l) for l in labels],
+#                                quantiles=[0.16, 0.5, 0.84], show_titles=True,
+#                                title_kwargs={"fontsize": 12})
 
 
 
