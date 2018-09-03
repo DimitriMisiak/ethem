@@ -24,7 +24,7 @@ import numpy as np
 import scipy.signal as sgl
 import scipy.linalg as LA
 
-from config_nbsi_solo import evad, nbsi, cryo, per, time, freq, E
+from config_nbsi_solo import evad, nbsi, cryo, per, time, freq, energy
 
 from scipy.optimize import minimize
 
@@ -156,9 +156,9 @@ def reduce_solve(current, temp):
 
     max_pulse = max(abs(pulse))
 
-    energy = float(E.subs(edict)) / (1.6e-19 * 1e3) #J to keV
+    energy_eval = float(energy.subs(edict)) / (1.6e-19 * 1e3) #J to keV
 
-    sens = max_pulse / energy
+    sens = max_pulse / energy_eval
 
 ### BACKLINE IS THE RATIO BETWEEN THE END OF PULSE AND ITS MAX ?
 #    last = np.mean(pulse[-100:])

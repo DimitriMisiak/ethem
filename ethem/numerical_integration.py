@@ -14,8 +14,7 @@ from .core_classes import System
 
 
 def num_int(per, eval_dict, x0, fs=1e3, L=1.):
-    """ DEPRECATED.
-    Numerical integration of the electro-thermal equation with
+    """ Numerical integration of the electro-thermal equation with
     power perturbation for the given evaluation dictionnary.
 
     Parameters:
@@ -49,7 +48,7 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     #time array for plot
     time = np.arange(0., L, fs**-1)
 
-    t = System.t
+    t = System.time
 
     capa_matrix = System.capacity_matrix
     per_arg = capa_matrix**-1 * per / sy.Heaviside(t)
@@ -67,7 +66,7 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
 
     trange = np.arange(0, L, fs**-1)
 
-    sol = odeint(funky, x0, trange, printmessg=True,
+    sol = odeint(funky, x0, trange,
                  rtol=1e-15, atol=1e-15, hmax=fs**-1)
 
     # substracting the initial vector
@@ -79,7 +78,11 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
 
 
 def num_int_proto(per, eval_dict, x0, fs=1e3, L=1., max_step_coef=10.):
-
+    """ Same as num_int but using the solve_ivp supposed to be more
+    sofisticated than odeint. However this function of numerical integration
+    is very slow..
+    So not using this !
+    """
     x0 = np.array(x0)
 
     time = np.arange(0., L, fs**-1)

@@ -58,6 +58,20 @@ epcoup.power = eth.kapitsa_power(nbsi.volume*epcoup.cond_alpha,
                                  epcoup.from_bath.temperature,
                                  epcoup.to_bath.temperature)
 
+# Noise
+
+# TFN noise for each link
+for link in eth.System.subclass_list(eth.ThermalLink):
+    tfn = eth.tfn_noise(link.conductance,
+                        link.from_bath.temperature,
+                        link.to_bath.temperature)
+    tfn = tfn**0.5 # to obtain the LPSD
+    link.noise_flux['TFN '+link.label] = tfn
+
+# amplifier voltage noise (impact the observer only)
+e_amp = sy.symbols('e_amp')
+noise_voltage = e_amp
+nbsi.noise_obs['flat'] = noise_voltage
 
 #==============================================================================
 # UPDATING THE SYSTEM
@@ -67,9 +81,9 @@ eth.System.build_sym()
 #==============================================================================
 # EVENT PERTURBATION
 #==============================================================================
-E, sth, t0 = sy.symbols('E, sth, t0')
+energy, tau_therm, t0 = sy.symbols('E, tau_th, t0')
 per = sy.zeros(len(eth.System.bath_list), 1)
-per[0] = eth.event_power(E, sth, time)
+per[0] = eth.event_power(energy, tau_therm, time)
 
 #==============================================================================
 # EVALUATION DICT
@@ -93,11 +107,16 @@ evad_sys = {
         nbsi.current : 1.5e-10 #A
 }
 
-evad_per = {sth : 4.03e-3, #s
-            E : 1e3 * 1.6e-19, #J
+evad_per = {tau_therm : 4.03e-3, #s
+            energy : 1e3 * 1.6e-19, #J
             t0 : 0.0}
+
+evad_noise = {
+        e_amp :1e-7
+}
 
 evad = dict()
 evad.update(evad_const)
 evad.update(evad_sys)
 evad.update(evad_per)
+evad.update(evad_noise)

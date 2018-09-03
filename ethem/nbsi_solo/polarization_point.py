@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Config file for the test detector using NbSi technology.
+Illustrate the resolution of the steady staet and explore the polarization
+plan according to different observables.
 
 @author: misiak
 """

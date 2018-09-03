@@ -23,7 +23,8 @@ def impedance_matrix_fun(eval_dict):
     Parameters
     ==========
     eval_dict : dict
-        Evaluation dictionnary.
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
     frange : 1d numpy.ndarray
         Numpy array of the frequencies where to evaluate the complex impedance
         function.
@@ -33,13 +34,13 @@ def impedance_matrix_fun(eval_dict):
     cimeq_fun :Function taking an numpy.array as parameter and returnign an
         array of matrices, mimicking the broadcasting ability of numpy.
     """
-    cimeq = System.admittance_matrix
-    cimeq_num = cimeq.subs(eval_dict)
-    cimeq_funk = sy.lambdify(System.freq, cimeq_num, modules="numpy")
+    admat = System.admittance_matrix
+    admat_num = admat.subs(eval_dict)
+    admat_funk = sy.lambdify(System.freq, admat_num, modules="numpy")
 
-    cimeq_fun = lambda f: np.linalg.inv(lambda_fun_mat(cimeq_funk, f))
+    admat_fun = lambda f: np.linalg.inv(lambda_fun_mat(admat_funk, f))
 
-    return cimeq_fun
+    return admat_fun
 
 
 def per_fft(per):
@@ -67,7 +68,25 @@ def per_fft(per):
 
 
 def per_fft_fun(per, eval_dict, fs):
-    """ pass
+    """ Return a function accepting a numpy.array with the broadcasting
+    ability of numpy.
+    The function returns the event perturbation for the given frequencies.
+
+    Parameters
+    ==========
+    per : sympy.matrices.dense.MutableDenseMatrix
+        Event perturbation, should be a function of time.
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+
+    Return
+    ======
+    perf_fun_array : Function taking an numpy.array as parameter and
+        returnign an array of matrices,
+        mimicking the broadcasting ability of numpy.
     """
     perf = per_fft(per)
     perf_num = perf.subs(eval_dict) * fs
@@ -76,23 +95,6 @@ def per_fft_fun(per, eval_dict, fs):
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 
     return perf_fun_array
-
-
-def response_gen(cimeq_fun, per_fun):
-    """ pass
-    """
-    def aux_gen(frange):
-        """ pass
-        """
-        cimeq_array = cimeq_fun(frange)
-
-        perf_array = per_fun(frange)
-
-        einsum_array = np.einsum('ijk, ik -> ij', cimeq_array, perf_array)
-
-        return einsum_array
-
-    return aux_gen
 
 
 def response_event(per, eval_dict, fs):
@@ -105,7 +107,8 @@ def response_event(per, eval_dict, fs):
         Power perturbation of the system. Its shape must matches the one
         of System.admittance_matrix**-1
     eval_dict : dict
-        Contains the evaluation values for the system characteristics symbols.
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
     fs : float
         Sampling frequency.
 
@@ -125,7 +128,7 @@ def response_event(per, eval_dict, fs):
 
         sv_array = np.einsum('ijk, ik -> ij', cimeq_array, perf_array)
 
-        return sv_array
+        return sv_array.T
 
     return sens_fun
 
@@ -137,7 +140,8 @@ def response_noise(eval_dict):
     Parameters
     ==========
     eval_dict : dict
-        Contains the evaluation values for the system characteristics symbols.
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
 
     Return
     ======

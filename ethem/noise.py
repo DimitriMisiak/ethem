@@ -17,8 +17,15 @@ def noise_flux_vects():
     noise perturbation vectors (LPSD) .
 
     Return LPSD/perturbation, so that the sign holds a physical meaning.
+
+    Returns
+    =======
+    vects : dict
+        Dictionnary with keys labelling the noise source, and the values
+        being the symbolic noise matrix associated.
     """
     bath_list = System.bath_list
+    num = len(bath_list)
     vects = dict()
     # internal noise of the thermal/electric bath
     for b in bath_list:
@@ -26,7 +33,7 @@ def noise_flux_vects():
 
         for key, noi in noi_dict.iteritems():
             if noi != 0:
-                vec = sy.zeros(4, 1)
+                vec = sy.zeros(num, 1)
 
                 ind = bath_list.index(b)
                 vec[ind] = noi
@@ -45,7 +52,7 @@ def noise_flux_vects():
 
         for key, noi in noi_dict.iteritems():
             if noi != 0:
-                vec = sy.zeros(4, 1)
+                vec = sy.zeros(num, 1)
 
                 if isinstance(s.from_bath, RealBath):
                     ind1 = bath_list.index(s.from_bath)
@@ -61,7 +68,22 @@ def noise_flux_vects():
 
 
 def noise_flux_fun(eval_dict):
-    """ pass
+    """ Returns a dictionnary of the different noise power function affecting
+    the system. The keys indicates the source of the noise. The values are
+    noise perturbation vectors (LPSD) .
+
+    Return LPSD/perturbation, so that the sign holds a physical meaning.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary.
+
+    Returns
+    =======
+    fun_dict : dict
+        Dictionnary with keys labelling the noise source, and the values
+        being the noise matrix function of the frequencies.
     """
     noise_dict = noise_flux_vects()
 
@@ -70,11 +92,11 @@ def noise_flux_fun(eval_dict):
     def fun_maker(noi):
 
         # FIXING SYMPY LAMBDIFY BROADCASTING
-        noi[0] += 1e-40 * System.f
+        noi[0] += 1e-40 * System.freq
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(System.f, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(System.freq, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambda_fun(noise_fun_simple, frange)
 
@@ -88,7 +110,22 @@ def noise_flux_fun(eval_dict):
 
 
 def noise_obs_fun(ref_bath, eval_dict):
-    """ pass
+    """ Returns a dictionnary of the different observationnal noise function
+    affecting the system. The keys indicates the source of the noise.
+    The values are noise perturbation vectors (LPSD) .
+
+    Return LPSD/perturbation, so that the sign holds a physical meaning.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary.
+
+    Returns
+    =======
+    fun_dict : dict
+        Dictionnary with keys labelling the noise source, and the values
+        being the noise matrix function of the frequencies.
     """
     noise_dict = ref_bath.noise_obs
 
@@ -98,7 +135,7 @@ def noise_obs_fun(ref_bath, eval_dict):
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(System.f, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(System.freq, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambdify_fun(noise_fun_simple, frange)
 
