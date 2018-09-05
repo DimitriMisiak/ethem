@@ -12,7 +12,7 @@ import sympy as sy
 from .evaluation import lambda_fun_mat, lambda_fun
 from .core_classes import System
 from .noise import noise_flux_fun, noise_obs_fun
-
+from .psd import psd
 
 def impedance_matrix_fun(eval_dict):
     """ Return a function accepting an numpy.array with the broadcasting
@@ -98,8 +98,8 @@ def per_fft_fun(per, eval_dict, fs):
 
 
 def response_event(per, eval_dict, fs):
-    """ Return the response function of the system to a given perturbation
-    in the frequency space.
+    """ Return the response function (fft) of the system to
+    a given perturbation in the frequency space.
 
     Parameters
     ==========
@@ -131,6 +131,60 @@ def response_event(per, eval_dict, fs):
         return sv_array.T
 
     return sens_fun
+
+
+def psd_response_event(per, eval_dict, fs, L):
+    """ Return the psd arrays of the system response.
+
+    Parameters
+    ==========
+    per : Sympy matrix
+        Power perturbation of the system. Its shape must matches the one
+        of System.admittance_matrix**-1
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+    L : float
+        Time length of the window in second.
+
+    Returns
+    =======
+    freq_psd : numpy.ndarray
+        Frequency array containing only the positive frequencies (no 0th freq).
+    response_psd : numpy.ndarray
+        PSD arrays.
+
+    See also
+    ========
+    ethem.psd, ethem.response_event, np.ftt.fftfreq,
+    """
+    freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
+
+    response_fft = response_event(per, eval_dict, fs)(freq_fft)
+
+    freq_psd, response_psd = psd(response_fft, fs)
+
+    return freq_psd, response_psd
+
+
+def psd_response_event_ref(per, eval_dict, fs, L, ref_bath):
+    """ Projection of the ethem.psd_response_event function
+    on the reference bath used for the measure.
+
+    ref_bath : ethem.RealBath
+        Reference bath where the measure takes place.
+
+    See also
+    ========
+    ethem.psd_response_event
+    """
+    ref_ind = System.bath_list.index(ref_bath)
+
+    freq_psd, response_psd = psd_response_event(per, eval_dict, fs, L)
+
+    return freq_psd, response_psd[ref_ind]
 
 
 def response_noise(eval_dict):
@@ -169,7 +223,7 @@ def response_noise(eval_dict):
             # computing the psd from the fft
             psd_array = np.abs(impact_array)**2
 
-            return psd_array
+            return psd_array.T # transposition for a pretty handy return
 
         return psd_fun
 
@@ -180,8 +234,56 @@ def response_noise(eval_dict):
     return psd_fun_dict
 
 
+def response_noise_ref(eval_dict, ref_bath):
+    """ Projection of the ethem.response_noise function on the reference bath
+    used for the measure.
+
+    ref_bath : ethem.RealBath
+        Reference bath where the measure takes place.
+
+    See also
+    ========
+    ethem.response_noise
+    """
+    ref_ind = System.bath_list.index(ref_bath)
+
+    noise_dict = response_noise(eval_dict)
+
+    noise_ref_dict = dict()
+
+    def ref_fun_maker(n_fun):
+
+        def ref_fun(frange):
+
+            return n_fun(frange)[ref_ind]
+
+        return ref_fun
+
+    for key,nfun in noise_dict.iteritems():
+
+        noise_ref_dict[key] = ref_fun_maker(nfun)
+
+    return noise_ref_dict
+
+
 def measure_noise(ref_bath, eval_dict):
-    """ pass
+    """ Return the observationnal noise psd perturbation
+    in the frequency space.
+
+    Parameters
+    ==========
+    ref_bath : ethem.RealBath
+        Bath where the measure takes place.
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+
+    Return
+    ======
+    psd_fun_dict : dict of function
+        Key are a string specifying the noise source, and the values are
+        the corresponding noise function taking as parameter the frequency
+        array and returning the noise array.
     """
     noise_fun_dict = noise_obs_fun(ref_bath, eval_dict)
 
@@ -205,3 +307,85 @@ def measure_noise(ref_bath, eval_dict):
         psd_fun_dict[key] = psd_fun_maker(noise_fun)
 
     return psd_fun_dict
+
+
+def noise_tot_fun(ref_bath, eval_dict):
+    """ Return the total noise psd perturbation function
+    in the frequency space.
+
+    Parameters
+    ==========
+    ref_bath : ethem.RealBath
+        Bath where the measure takes place.
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+
+    Return
+    ======
+    noise_fun : function
+        Taking the frequency array as parameter, return the noise array.
+    """
+    ref_ind = System.bath_list.index(ref_bath)
+
+    obs_dict = measure_noise(ref_bath, eval_dict)
+
+    sys_dict = response_noise(eval_dict)
+
+    def noise_fun(frange):
+
+        sys_eval_dict = {k:v(frange) for k,v in sys_dict.iteritems()}
+        obs_eval_dict = {k:v(frange) for k,v in obs_dict.iteritems()}
+
+        full_array = (
+            np.sum(obs_eval_dict.values(), axis=0)
+            + np.sum(sys_eval_dict.values(), axis=0)[ref_ind]
+        )
+
+        return full_array
+
+    return noise_fun
+
+
+def nep_ref(per, eval_dict, fs, L, ref_bath):
+    """ Return the nep array in the reference bath by computing
+    the response psd of the system and the total noise.
+
+    Parameters
+    ==========
+    per : Sympy matrix
+        Power perturbation of the system. Its shape must matches the one
+        of System.admittance_matrix**-1
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+    L : float
+        Time length of the window in second.
+    ref_bath : ethem.RealBath
+        Reference bath where the measure takes place.
+
+    Returns
+    =======
+    freq_array : numpy.ndarray
+        Frequency array containing only the positive frequencies (no 0th freq).
+    nep_array : numpy.ndarray
+        NEP array.
+
+    See also
+    ========
+    ethem.psd_response_event_ref, ethem.noise_tot_fun
+
+    """
+    freq_array, pulse_array = psd_response_event_ref(
+            per, eval_dict, fs, L, ref_bath
+    )
+
+    noise_fun = noise_tot_fun(ref_bath, eval_dict)
+
+    noise_array = noise_fun(freq_array)
+
+    nep_array = noise_array / pulse_array
+
+    return freq_array, nep_array

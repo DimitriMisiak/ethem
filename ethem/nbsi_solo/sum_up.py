@@ -46,6 +46,7 @@ sol_ss = eth.solve_sse(evad, [0.016])
 #==============================================================================
 # temporal
 ni_time_array, ni_pulse_array = eth.num_int(per, evad, sol_ss, L=L, fs=fs)
+ni_pulse_array = ni_pulse_array[0]
 
 # fft freq
 ni_freq_fft = eth.temp_to_fft(ni_time_array)

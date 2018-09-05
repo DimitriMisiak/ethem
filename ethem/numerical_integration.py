@@ -72,9 +72,10 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     # substracting the initial vector
     sol_per = sol-x0
 
-    sol_array = np.insert(sol_per.T, 0, time, axis=0)
+# old version where the return was formatted in an other way
+#    sol_array = np.insert(sol_per.T, 0, time, axis=0)
 
-    return sol_array
+    return (time, sol_per.T,)
 
 
 def num_int_proto(per, eval_dict, x0, fs=1e3, L=1., max_step_coef=10.):

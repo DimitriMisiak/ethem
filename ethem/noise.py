@@ -11,6 +11,7 @@ import sympy as sy
 from .core_classes import RealBath, System
 from .evaluation import lambda_fun, lambdify_fun
 
+
 def noise_flux_vects():
     """ Returns a dictionnary of the different noise power affecting
     the system. The keys indicates the source of the noise. The values are
@@ -146,6 +147,3 @@ def noise_obs_fun(ref_bath, eval_dict):
         fun_dict[key] = fun_maker(noise)
 
     return fun_dict
-
-
-

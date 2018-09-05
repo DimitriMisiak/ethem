@@ -71,8 +71,8 @@ def ss_solve(current, temp, t0=0.0):
     return sol.x
 
 
-i_array = 10**np.linspace(-11, -9, 50)
-t_array = np.linspace(0.015, 0.020, 50)
+i_array = 10**np.linspace(-11, -9, 20)
+t_array = np.linspace(0.015, 0.020, 20)
 
 sol_t_R = ss_solve(i_array, tc, t0=0.0)
 sol_t_L = ss_solve(i_array, tc, t0=0.1)

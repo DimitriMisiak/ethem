@@ -28,16 +28,16 @@ def psd(fft, fs, weight=None):
 
     Returns
     =======
-    freq : nd.array
+    freq : numpy.ndarray
         Frequency array containing only the positive frequencies (no 0th freq).
-    psd : nd.array
+    psd : numpy.ndarray
         PSD array.
     """
     nfft = fft.shape[-1]
     if weight == None:
         s1 = nfft
         s2 = nfft
-    else :
+    else:
         s1 = np.sum(weight)
         s2 = np.sum(np.array(weight)**2)
 
