@@ -14,6 +14,7 @@ from .core_classes import System
 from .noise import noise_flux_fun, noise_obs_fun
 from .psd import psd
 
+
 def impedance_matrix_fun(eval_dict):
     """ Return a function accepting an numpy.array with the broadcasting
     ability of numpy.
@@ -389,3 +390,81 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     nep_array = noise_array / pulse_array
 
     return freq_array, nep_array
+
+
+def nep_to_res(freq_array, nep_array, flim):
+    """ Return the resolution value from the integration of 1/nep_array^2.
+
+    Parameters
+    ==========
+    freq_array : array_like
+        Frequency array.
+    nep_array : numpy.ndarray
+        NEP array.
+    flim : tuple of float
+        The tuple flim = (finf, fsup) contains the lower and upper
+        limit of integration.
+
+    Return
+    ======
+    res : float
+        Resolution value. Be careful to the unit ! Should be the same as
+        the energy referenced in the "perturbation object"
+        affecting the system.
+
+    See also
+    ========
+    function used for the numerical integration : numpy.trapz
+    """
+    finf, fsup = flim
+    invres_array = 4. / nep_array
+
+    inf_index = max(np.where(freq_array<finf)[0])
+    sup_index = min(np.where(freq_array>fsup)[0])
+
+    invres_trapz = invres_array[inf_index:sup_index]
+    freq_trapz = freq_array[inf_index:sup_index]
+
+    invres_int = np.trapz(invres_trapz, freq_trapz)
+    res = (invres_int)**-0.5
+
+    return res
+
+
+def res_ref(per, eval_dict, fs, L, ref_bath, flim):
+    """ Return the resolution value. No need for byproduct (nep_array, etc)
+    for this function.
+
+    Parameters
+    ==========
+    per : Sympy matrix
+        Power perturbation of the system. Its shape must matches the one
+        of System.admittance_matrix**-1
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+    L : float
+        Time length of the window in second.
+    ref_bath : ethem.RealBath
+        Reference bath where the measure takes place.
+    flim : tuple of float
+        The tuple flim = (finf, fsup) contains the lower and upper
+        limit of integration.
+
+    Return
+    ======
+    res : float
+        Resolution value. Be careful to the unit ! Should be the same as
+        the energy referenced in the "perturbation object"
+        affecting the system.
+
+    See also
+    ========
+    ethem.nep_ref, ethem.nep_to_res
+    """
+    freq_array, nep_array = nep_ref(per, eval_dict, fs, L, ref_bath)
+    res = nep_to_res(freq_array, nep_array, flim)
+
+    return res

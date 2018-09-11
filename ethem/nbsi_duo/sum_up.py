@@ -142,8 +142,11 @@ sup_index = min(np.where(fi_freq_psd>sup)[0])
 invres_trapz = invres_array[inf_index:sup_index]
 freq_trapz = fi_freq_psd[inf_index:sup_index]
 
-invres_int = np.trapz(invres_trapz, freq_trapz)
-res = (invres_int)**-0.5
+#invres_int = np.trapz(invres_trapz, freq_trapz)
+#res = (invres_int)**-0.5
+
+#res = eth.nep_to_res(nep_freq_array, nep_array, (inf, sup))
+res = eth.res_ref(per, edict, fs, L, ref_bath, (inf, sup))
 
 res_msg = 'Resolution : {:.0f} eV'.format(
         res * energy.subs(edict) / (1.6e-19)
