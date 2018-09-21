@@ -23,7 +23,7 @@ import numpy as np
 import scipy.signal as sgl
 import scipy.linalg as LA
 
-from config_nbsi_solo import (evad, nbsi, cryo, per, time, freq,
+from config import (evad, abso, elntd, cryo, per, time, freq,
                               energy, tau_therm)
 
 from scipy.optimize import minimize
@@ -39,6 +39,7 @@ fs = 1e3
 #==============================================================================
 # STEADY STATE SOLUTION
 #==============================================================================
+#sol_ss = eth.solve_sse(evad, [0.016, 0.016])
 sol_ss = eth.solve_sse(evad)
 
 #==============================================================================
@@ -61,9 +62,9 @@ ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
 ##==============================================================================
 #edict = evad.copy()
 #edict.update({
-#        nbsi.temperature: sol_ss[eth.System.bath_list.index(nbsi)],
+#        elntd.temperature: sol_ss[eth.System.bath_list.index(elntd)],
+#        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
 #})
-
 edict = eth.dict_sse(evad)
 
 # time and freq array
@@ -109,7 +110,7 @@ f0_msg += '] Hz'
 #==============================================================================
 # NOISE RESPONSE
 #==============================================================================
-ref_bath = nbsi
+ref_bath = elntd
 ref_ind = eth.System.bath_list.index(ref_bath)
 
 inf = 1.
@@ -154,13 +155,12 @@ res_msg = 'Resolution : {:.0f} eV'.format(
 )
 print res_msg
 
+#%%
 ##==============================================================================
 ## PLOT
 ##==============================================================================
 num = len(eth.System.bath_list)
-fig, ax = plt.subplots(ncols=3, nrows=num,
-                       num='NUMERICAL INTEGRATION', figsize=(17,3*num),
-                       squeeze=False)
+fig, ax = plt.subplots(ncols=3, nrows=num, num='NUMERICAL INTEGRATION', figsize=(17,7))
 
 for i in range(num):
     # NI

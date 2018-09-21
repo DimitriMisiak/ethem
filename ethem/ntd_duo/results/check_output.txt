@@ -1,0 +1,88 @@
+
+build_phi_vect :
+
+[T_abso]
+[      ]
+[T_ntd ]
+
+build_capacity_matrix :
+
+[          3                               ]
+[M_a*T_abso *cp_Ge                         ]
+[-----------------             0           ]
+[       D_Ge                               ]
+[                                          ]
+[        0          H_ntd*L_ntd*W_ntd*ce_Ge]
+
+build_steady_state_eq :
+
+[                         /      n_ep        n_ep\             /        n_Au      n_Au\]
+[- H_ntd*L_ntd*W_ntd*g_ep*\T_abso     - T_ntd    / + S_Au*g_Au*\- T_abso     + T_b    /]
+[                                                                                      ]
+[                                                                    /       0.5\      ]
+[                                                                    |/  T0 \   |      ]
+[                                                                    ||-----|   |      ]
+[                             /      n_ep        n_ep\            2  \\T_ntd/   /      ]
+[      H_ntd*L_ntd*W_ntd*g_ep*\T_abso     - T_ntd    / + R0*i_bias *e                  ]
+
+build_eletro_thermal_eq :
+
+[     /                         /      n_ep        n_ep\             /        n_Au      n_Au\\]
+[D_Ge*\- H_ntd*L_ntd*W_ntd*g_ep*\T_abso     - T_ntd    / + S_Au*g_Au*\- T_abso     + T_b    //]
+[---------------------------------------------------------------------------------------------]
+[                                                3                                            ]
+[                                      M_a*T_abso *cp_Ge                                      ]
+[                                                                                             ]
+[                                                                       /       0.5\          ]
+[                                                                       |/  T0 \   |          ]
+[                                                                       ||-----|   |          ]
+[                                /      n_ep        n_ep\            2  \\T_ntd/   /          ]
+[         H_ntd*L_ntd*W_ntd*g_ep*\T_abso     - T_ntd    / + R0*i_bias *e                      ]
+[         --------------------------------------------------------------------------          ]
+[                                  H_ntd*L_ntd*W_ntd*ce_Ge                                    ]
+
+build_coupling_matrix :
+
+[      /                    n_ep                              n_Au          \                                                                                        ]
+[      |  H_ntd*L_ntd*T_abso    *W_ntd*g_ep*n_ep   S_Au*T_abso    *g_Au*n_Au|                                                                                        ]
+[-D_Ge*|- -------------------------------------- - -------------------------|                                              n_ep                                      ]
+[      \                  T_abso                             T_abso         /                       -D_Ge*H_ntd*L_ntd*T_ntd    *W_ntd*g_ep*n_ep                      ]
+[-----------------------------------------------------------------------------                      --------------------------------------------                     ]
+[                                        3                                                                              3                                            ]
+[                              M_a*T_abso *cp_Ge                                                              M_a*T_abso *T_ntd*cp_Ge                                ]
+[                                                                                                                                                                    ]
+[                                                                                /                                                                     /       0.5\\ ]
+[                                                                                |                                                                     |/  T0 \   || ]
+[                                                                                |                                                                0.5  ||-----|   || ]
+[                                                                                |                                                       2 /  T0 \     \\T_ntd/   /| ]
+[                                                                                |                   n_ep                   0.5*R0*i_bias *|-----|   *e            | ]
+[                                                                                |  H_ntd*L_ntd*T_ntd    *W_ntd*g_ep*n_ep                  \T_ntd/                 | ]
+[                                  n_ep                                         -|- ------------------------------------- - ---------------------------------------| ]
+[                           -T_abso    *g_ep*n_ep                                \                  T_ntd                                    T_ntd                 / ]
+[                           ----------------------                              -------------------------------------------------------------------------------------]
+[                                T_abso*ce_Ge                                                                  H_ntd*L_ntd*W_ntd*ce_Ge                               ]
+
+build_admittance_mat :
+
+[                  /       /                    n_ep                              n_Au          \           \                                                                                                                        ]
+[                  |       |  H_ntd*L_ntd*T_abso    *W_ntd*g_ep*n_ep   S_Au*T_abso    *g_Au*n_Au|           |                                                                                                                        ]
+[                  |  D_Ge*|- -------------------------------------- - -------------------------|           |                                                                                                                        ]
+[          3       |       \                  T_abso                             T_abso         /           |                                                                                                                        ]
+[M_a*T_abso *cp_Ge*|- --------------------------------------------------------------------------- + 2*I*pi*f|                                                                                                                        ]
+[                  |                                         3                                              |                                                           n_ep                                                         ]
+[                  \                               M_a*T_abso *cp_Ge                                        /                                         -H_ntd*L_ntd*T_ntd    *W_ntd*g_ep*n_ep                                         ]
+[------------------------------------------------------------------------------------------------------------                                         ---------------------------------------                                        ]
+[                                                    D_Ge                                                                                                              T_ntd                                                         ]
+[                                                                                                                                                                                                                                    ]
+[                                                                                                                                      /                                                                                /       0.5\\]
+[                                                                                                                                      |                                                                                |/  T0 \   ||]
+[                                                                                                                                      |                                                                           0.5  ||-----|   ||]
+[                                                                                                                                      |                                                                  2 /  T0 \     \\T_ntd/   /|]
+[                                                                                                                                      |                              n_ep                   0.5*R0*i_bias *|-----|   *e            |]
+[                                                                                                                                      |             H_ntd*L_ntd*T_ntd    *W_ntd*g_ep*n_ep                  \T_ntd/                 |]
+[                                                     n_ep                                                                             |           - ------------------------------------- - ---------------------------------------|]
+[                                  -H_ntd*L_ntd*T_abso    *W_ntd*g_ep*n_ep                                                             |                             T_ntd                                    T_ntd                 |]
+[                                  ----------------------------------------                                    H_ntd*L_ntd*W_ntd*ce_Ge*|2*I*pi*f - ---------------------------------------------------------------------------------|]
+[                                                   T_abso                                                                             \                                        H_ntd*L_ntd*W_ntd*ce_Ge                             /]
+
+ END OF PPRINT.

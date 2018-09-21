@@ -39,7 +39,7 @@ fs = 1e3
 #==============================================================================
 # STEADY STATE SOLUTION
 #==============================================================================
-sol_ss = eth.solve_sse(evad, [0.016, 0.016])
+sol_ss = eth.solve_sse(evad)
 
 #==============================================================================
 # NUMERICAL INTEGRATION (NI)
@@ -59,11 +59,13 @@ ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
 ##==============================================================================
 ## FREQUENCY INVERSION
 ##==============================================================================
-edict = evad.copy()
-edict.update({
-        nbsi.temperature: sol_ss[eth.System.bath_list.index(nbsi)],
-        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
-})
+#edict = evad.copy()
+#edict.update({
+#        nbsi.temperature: sol_ss[eth.System.bath_list.index(nbsi)],
+#        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
+#})
+
+edict = eth.dict_sse(evad)
 
 # time and freq array
 fi_time_array = np.arange(0, L, fs**-1)

@@ -1,7 +1,8 @@
 9#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Sum up all the possibility of the ethem package applied to the nbsi_solo simulation.
+Sum up all the possibility of the ethem package first applied to the
+nbsi_solo and nbsi_duo detectors.
 
 @author: misiak
 """
@@ -10,8 +11,10 @@ import sympy as sy
 
 # adding ethem module path to the pythonpath
 import sys
-from os.path import dirname
-sys.path.append( dirname(dirname(dirname(__file__))) )
+from os.path import dirname, abspath
+PATH = dirname(dirname(dirname(abspath(__file__))))
+
+sys.path.append( PATH )
 
 import ethem as eth
 
@@ -23,7 +26,7 @@ import numpy as np
 import scipy.signal as sgl
 import scipy.linalg as LA
 
-from config_nbsi_solo import (evad, nbsi, cryo, per, time, freq,
+from config_ntd_duo import (evad, abso, ntd, cryo, per, time, freq,
                               energy, tau_therm)
 
 from scipy.optimize import minimize
@@ -61,7 +64,8 @@ ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
 ##==============================================================================
 #edict = evad.copy()
 #edict.update({
-#        nbsi.temperature: sol_ss[eth.System.bath_list.index(nbsi)],
+#        ntd.temperature: sol_ss[eth.System.bath_list.index(ntd)],
+#        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
 #})
 
 edict = eth.dict_sse(evad)
@@ -109,7 +113,7 @@ f0_msg += '] Hz'
 #==============================================================================
 # NOISE RESPONSE
 #==============================================================================
-ref_bath = nbsi
+ref_bath = ntd
 ref_ind = eth.System.bath_list.index(ref_bath)
 
 inf = 1.
@@ -158,9 +162,7 @@ print res_msg
 ## PLOT
 ##==============================================================================
 num = len(eth.System.bath_list)
-fig, ax = plt.subplots(ncols=3, nrows=num,
-                       num='NUMERICAL INTEGRATION', figsize=(17,3*num),
-                       squeeze=False)
+fig, ax = plt.subplots(ncols=3, nrows=num, num='NUMERICAL INTEGRATION', figsize=(17,7))
 
 for i in range(num):
     # NI
@@ -207,6 +209,8 @@ for i in range(num):
     ax[i,2].set_ylabel('PSD [$K^2/Hz$]')
 
 fig.tight_layout()
+fig.show()
+
 #
 fig_ref, ax_ref = plt.subplots(nrows=3, num='REF BATH PLOT', figsize=(7,10))
 
@@ -238,4 +242,4 @@ for i in range(3):
         ax_ref[i].legend(title=res_msg)
 
 fig_ref.tight_layout()
-
+fig.show()

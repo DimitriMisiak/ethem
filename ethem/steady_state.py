@@ -11,6 +11,7 @@ import sympy as sy
 from scipy.optimize import root
 from scipy.integrate import odeint
 from .core_classes import System
+from .et_classes import ThermalBath, Thermostat, Capacitor
 
 
 def solve_sse_old(eval_dict, x0, method=None, printsuccess=False):
@@ -64,7 +65,7 @@ def solve_sse_old(eval_dict, x0, method=None, printsuccess=False):
     return sol.x
 
 
-def solve_sse(eval_dict, x0, twin=10., method=None, printsuccess=False):
+def solve_sse(eval_dict, x0=None, twin=10., method=None, printsuccess=False):
     """ Solve the steady-state system for the given system characteristics.
     Use the odeint function to emulate the convergence of the physical system.
     Then, the root finder is used to obtain a precise estimation of the
@@ -74,8 +75,11 @@ def solve_sse(eval_dict, x0, twin=10., method=None, printsuccess=False):
     ===========
     eval_dict :dict
         Contains the evaluation values for the system characteristics symbols.
-    x0 : array_like
-        Initial vector for the resolution.
+    x0 : array_like, optional
+        Initial vector for the resolution. By default, set to None. For a x0
+        set to None, the initial vector is 0 for the voltage, and the minimal
+        thermostat temperature of the system if such a ThermalBath exist, else
+        it is 0 for the temperature.
     twin : float, optional
         Time window for the odeint integration. By default, 10 seconds.
     method : str, optional
@@ -89,10 +93,14 @@ def solve_sse(eval_dict, x0, twin=10., method=None, printsuccess=False):
 
     See also:
     =========
-    scipy.optimize.root
+    scipy.optimize.root, eth.phi_init
     """
     # Quantities to be evaluated by the resolution
     phi = System.phi_vect
+
+    if x0 is None:
+        x0 = phi_init(eval_dict)
+
     # checking that the initial vector is adapted in length
     assert len(phi) == len(x0)
 
@@ -124,3 +132,74 @@ def solve_sse(eval_dict, x0, twin=10., method=None, printsuccess=False):
         print sol.success
 
     return sol.x
+
+
+def phi_init(eval_dict):
+    """ Return the intial vector used for the search of the steady-state
+    solution. For the capacitor, the initial voltage is set to 0. For the
+    thermal bath, the initial temperature is set to the lowest thermostat
+    temperature of the system. If none exists, the intial temperature is
+    set to 0.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary.
+
+    Return
+    ======
+    init : list of float
+        Initial vector.
+    """
+    bath_list = System.bath_list
+
+    v0 = 0.0 #V
+    t0 = 0.0 #K
+
+    thermo_list = System.subclass_list(Thermostat)
+    pure_list = list(set(thermo_list) - set(bath_list))
+    if len(pure_list):
+        temp_list = [(b.temperature).subs(eval_dict) for b in pure_list]
+        t0 = min(temp_list)
+
+    init = []
+    for b in bath_list:
+        if isinstance(b, Capacitor):
+            init.append(v0)
+        elif isinstance(b, ThermalBath):
+            init.append(t0)
+        else:
+            raise Exception('Invalid class in System.bath_list'
+                            '(only valid: Capacitor and ThermalBath).'
+                            'Class is '.format(type(b)))
+
+    return init
+
+
+def dict_sse(eval_dict, **kwargs):
+    """ Return an evaluation dictionnary with the steady-state solution.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary.
+
+    **kwargs parameters are passed to eth.solve_sse function.
+
+    Return
+    ======
+    eval_dict_sse : dict
+        Updated copy of the evaluation dictionnary.
+
+    See also
+    ========
+    eth.solve_sse
+    """
+    sol_ss = solve_sse(eval_dict, **kwargs)
+
+    sse_dict = {bath.main_quant:sol for bath,sol in zip(System.bath_list, sol_ss)}
+
+    eval_dict_sse = eval_dict.copy()
+    eval_dict_sse.update(sse_dict)
+
+    return eval_dict_sse
