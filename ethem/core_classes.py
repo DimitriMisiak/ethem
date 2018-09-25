@@ -277,6 +277,9 @@ class RealBath(Bath):
         # empty dictionnary of the measure noise of main_quant
         self.noise_obs = dict()
 
+        # perturbation of the bath is to zero (no perturation)
+        self.perturbation = 0
+
     @abc.abstractproperty
     def capacity(self):
         """ Capacity of the bath.
@@ -310,7 +313,6 @@ class RealBath(Bath):
         # equation in bath
         eq = sy.Eq(var, power, evaluate=False)
         return eq
-
 
 class Link(Element):
     """ Abstract Base Class which is the parent class for ThermalLink.

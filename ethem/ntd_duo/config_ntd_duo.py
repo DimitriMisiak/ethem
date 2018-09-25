@@ -89,6 +89,8 @@ e_amp = sy.symbols('e_amp')
 noise_voltage = e_amp
 ntd.noise_obs['flat'] = noise_voltage
 
+
+
 #==============================================================================
 # UPDATING THE SYSTEM
 #==============================================================================
@@ -97,10 +99,15 @@ eth.System.build_sym()
 #==============================================================================
 # EVENT PERTURBATION
 #==============================================================================
-energy, tau_therm, t0 = sy.symbols('E, tau_th, t0')
-per = sy.zeros(len(eth.System.bath_list), 1)
-per[0] = eth.event_power(energy*0.01, tau_therm, time)
-per[1] = eth.event_power(energy, tau_therm, time)
+energy, tau_therm, eps = sy.symbols('E, tau_th, eps')
+
+#per = sy.zeros(len(eth.System.bath_list), 1)
+#per[0] = eth.event_power(energy*0.01, tau_therm, time)
+#per[1] = eth.event_power(energy, tau_therm, time)
+
+#abso.perturbation = eth.event_power(0.01*energy, tau_therm, time)
+#ntd.perturbation = eth.event_power(energy, tau_therm, time)
+per = eth.Perturbation(energy, [1-eps, eps], [tau_therm, tau_therm])
 
 #==============================================================================
 # EVALUATION DICT
@@ -130,7 +137,8 @@ evad_sys = {
 
 evad_per = {tau_therm : 4.03e-3, #s
             energy : 1e3 * 1.6e-19, #J
-            t0 : 0.0}
+            eps : 0.2, #fraction
+            }
 
 evad_noise = {
         e_amp :1e-10

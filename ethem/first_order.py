@@ -90,7 +90,13 @@ def per_fft_fun(per, eval_dict, fs):
         mimicking the broadcasting ability of numpy.
     """
     perf = per_fft(per)
+
+    # multiplication by the sampling frequency to respect homogeneity later...
     perf_num = perf.subs(eval_dict) * fs
+
+    # FIXING SYMPY LAMBDIFY BROADCASTING
+    perf_num[0] += 1e-40 * System.freq
+
     perf_fun_simple = sy.lambdify(System.freq, perf_num, modules="numpy")
 
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)

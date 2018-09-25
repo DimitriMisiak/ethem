@@ -15,6 +15,7 @@ import sys
 import os
 
 from .core_classes import System, Element, Bath, RealBath, Link
+from .thermal import event_power
 
 
 class Thermostat(Bath):
@@ -138,3 +139,26 @@ class Resistor(Link):
     @property
     def main_flux(self):
         return self.current
+
+class Perturbation(object):
+    """ Perturbation class.
+    """
+    def __init__(self, energy, fraction, tau_therm):
+
+        bath_list = System.bath_list
+        num = len(bath_list)
+
+        assert len(fraction) == num
+        assert len(tau_therm) == num
+
+        per = sy.zeros(len(bath_list), 1)
+
+        for i in range(num):
+            per[i] = fraction[i] * event_power(energy, tau_therm[i], System.time)
+
+        self.matrix = per
+        self.energy = energy
+        self. fraction = fraction
+        self.tau_therm = tau_therm
+
+        System.perturbation = self

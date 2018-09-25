@@ -7,8 +7,6 @@ nbsi_solo and nbsi_duo detectors.
 @author: misiak
 """
 
-import sympy as sy
-
 # adding ethem module path to the pythonpath
 import sys
 from os.path import dirname, abspath
@@ -19,17 +17,10 @@ sys.path.append( PATH )
 import ethem as eth
 
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
-from scipy.integrate import odeint
-from scipy.optimize import root
 import numpy as np
-import scipy.signal as sgl
 import scipy.linalg as LA
 
-from config_ntd_duo import (evad, abso, ntd, cryo, per, time, freq,
-                              energy, tau_therm)
-
-from scipy.optimize import minimize
+from config_ntd_duo import (evad, ntd)
 
 plt.close('all')
 
@@ -45,10 +36,16 @@ fs = 1e3
 sol_ss = eth.solve_sse(evad)
 
 #==============================================================================
+# SYSTEM PERTURBATION
+#==============================================================================
+per = eth.System.perturbation
+
+#==============================================================================
 # NUMERICAL INTEGRATION (NI)
 #==============================================================================
 # temporal
-ni_time_array, ni_pulse_array = eth.num_int(per, evad, sol_ss, L=L, fs=fs)
+ni_time_array, ni_pulse_array = eth.num_int(per.matrix, evad, sol_ss,
+                                            L=L, fs=fs)
 
 # fft freq
 ni_freq_fft = eth.temp_to_fft(ni_time_array)
@@ -76,7 +73,7 @@ fi_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
 fi_freq_fftshift = np.fft.fftshift(fi_freq_fft)
 
 # fft freq
-fi_pulse_fft = eth.response_event(per, edict, fs)(fi_freq_fft)
+fi_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
 fi_pulse_fftshift = np.fft.fftshift(fi_pulse_fft)
 
 # temporal
@@ -96,7 +93,7 @@ coup_mat_eval = np.array(coup_mat_num).astype('float64')
 eig = LA.eigvals(coup_mat_eval)
 tau_coup = 1.0/np.real(eig)
 
-tau_therm_eval = float(tau_therm.subs(edict))
+tau_therm_eval = float(per.tau_therm[0].subs(edict))
 
 tau_array = np.sort(np.append(tau_therm_eval, tau_coup))
 tau_msg = '$\\tau$ = ['
@@ -120,7 +117,7 @@ inf = 1.
 sup = 100.
 
 ref_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
-ref_pulse_fft = eth.response_event(per, edict, fs)(fi_freq_fft)
+ref_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
 ref_freq_psd, ref_pulse_psd = eth.psd(ref_pulse_fft, fs)
 
 psd_fun_dict = eth.response_noise(edict)
@@ -137,7 +134,7 @@ obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.iteritems()}
 full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
 
 #nep_array = full_array / fi_pulse_psd[ref_ind]
-nep_freq_array, nep_array = eth.nep_ref(per, edict, fs, L, ref_bath)
+nep_freq_array, nep_array = eth.nep_ref(per.matrix, edict, fs, L, ref_bath)
 
 invres_array = 4. / nep_array
 
@@ -151,10 +148,10 @@ freq_trapz = fi_freq_psd[inf_index:sup_index]
 #res = (invres_int)**-0.5
 
 #res = eth.nep_to_res(nep_freq_array, nep_array, (inf, sup))
-res = eth.res_ref(per, edict, fs, L, ref_bath, (inf, sup))
+res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
 
 res_msg = 'Resolution : {:.0f} eV'.format(
-        res * energy.subs(edict) / (1.6e-19)
+        res * per.energy.subs(edict) / (1.6e-19)
 )
 print res_msg
 
