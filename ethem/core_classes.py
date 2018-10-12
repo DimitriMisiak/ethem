@@ -357,3 +357,9 @@ class Link(Element):
         - voltage for Coil classes (work with TES ?)
         """
         return
+
+    @property
+    def main_quant_diff(self):
+        """ Difference of main_quant between the from_bath and the to_bath
+        """
+        return self.from_bath.main_quant - self.to_bath.main_quant

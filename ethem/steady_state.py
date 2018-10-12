@@ -134,6 +134,29 @@ def solve_sse(eval_dict, x0=None, twin=10., method=None, printsuccess=False):
     return sol.x
 
 
+def solve_sse_manual(funk, x0, twin=10., method=None, printsuccess=False):
+
+    system_eq = lambda x: np.squeeze(funk(*x))
+
+    system_eq_odeint = lambda x,t: system_eq(x)
+
+    time_odeint = np.linspace(0., twin, 10)
+
+    inte = odeint(system_eq_odeint, x0, time_odeint)
+
+    if method is None:
+        method = 'lm'
+
+    # Resolution with scipy.optimize.root
+    sol = root(system_eq, inte[-1], method=method,
+               options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
+
+    if printsuccess == True:
+        print sol.success
+
+    return sol.x
+
+
 def phi_init(eval_dict):
     """ Return the intial vector used for the search of the steady-state
     solution. For the capacitor, the initial voltage is set to 0. For the
@@ -160,7 +183,7 @@ def phi_init(eval_dict):
     pure_list = list(set(thermo_list) - set(bath_list))
     if len(pure_list):
         temp_list = [(b.temperature).subs(eval_dict) for b in pure_list]
-        t0 = min(temp_list)
+        t0 = float(min(temp_list))
 
     init = []
     for b in bath_list:

@@ -112,6 +112,11 @@ class ThermalLink(Link):
         # default choice for the conductance
         return (self.power).diff(self.from_bath.temperature)
 
+    @property
+    def temperature_diff(self):
+#        return self.from_bath.temperature - self.to_bath.temperature
+        return self.main_quant_diff
+
 
 class Resistor(Link):
     """ Link subclass defining an electric link characterized by
@@ -132,13 +137,17 @@ class Resistor(Link):
         self.temperature = sy.symbols('T_R_' + self.label)
 
     @property
+    def voltage(self):
+        return self.main_quant_diff
+
+    @property
     def current(self):
-        return self.resistivity**-1 * (self.from_bath.voltage
-                                       - self.to_bath.voltage)
+        return self.resistivity**-1 * self.voltage
 
     @property
     def main_flux(self):
         return self.current
+
 
 class Perturbation(object):
     """ Perturbation class.
