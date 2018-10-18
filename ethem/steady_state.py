@@ -134,27 +134,80 @@ def solve_sse(eval_dict, x0=None, twin=10., method=None, printsuccess=False):
     return sol.x
 
 
-def solve_sse_manual(funk, x0, twin=10., method=None, printsuccess=False):
+def solve_sse_manual(funk, x0, twin=10., method=None, printsuccess=False,
+                     no_odeint=False):
 
     system_eq = lambda x: np.squeeze(funk(*x))
 
-    system_eq_odeint = lambda x,t: system_eq(x)
+    if no_odeint:
 
-    time_odeint = np.linspace(0., twin, 10)
+        x0_root = x0
 
-    inte = odeint(system_eq_odeint, x0, time_odeint)
+    if not no_odeint:
+
+        system_eq_odeint = lambda x,t: system_eq(x)
+
+        time_odeint = np.linspace(0., twin, 10)
+
+        inte = odeint(system_eq_odeint, x0, time_odeint)
+
+        x0_root = inte[-1]
 
     if method is None:
         method = 'lm'
 
     # Resolution with scipy.optimize.root
-    sol = root(system_eq, inte[-1], method=method,
+    sol = root(system_eq, x0_root, method=method,
                options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
 
     if printsuccess == True:
         print sol.success
 
     return sol.x
+
+
+def solve_sse_perf(funk, x0, safe_odeint=True, **kwargs):
+
+    if not safe_odeint:
+
+        x0_root = x0
+
+    if safe_odeint:
+
+        system_eq_odeint = lambda x,t: funk(x)
+
+        time_odeint = np.linspace(0., 10., 10)
+
+        inte = odeint(system_eq_odeint, x0, time_odeint)
+
+        x0_root = inte[-1]
+
+    # Resolution with scipy.optimize.root
+    sol = root(funk, x0_root, **kwargs)
+
+    return sol
+
+
+#def solve_sse_perf2(funk, x0, safe_odeint=True, **kwargs):
+#
+#    if not safe_odeint:
+#
+#        x0_root = x0
+#
+#    if safe_odeint:
+#
+#        system_eq_odeint = lambda x,t: funk(x)
+#
+#        time_odeint = np.linspace(0., 10., 10)
+#
+#        inte = odeint(system_eq_odeint, x0, time_odeint)
+#
+#        x0_root = inte[-1]
+#
+#    # Resolution with scipy.optimize.root
+#    sol = root(funk, x0_root, **kwargs)
+#
+#    return sol
 
 
 def phi_init(eval_dict):
