@@ -151,6 +151,17 @@ class Resistor(Link):
 
 class Perturbation(object):
     """ Perturbation class.
+
+    Parameters
+    ----------
+    energy : sympy.symbols
+        Energy symbol.
+    Fraction : list
+        List of the fraction of the energy going in each bath. Its length
+        must match the number of bath in the system.
+    tau_therm : list
+        List of the thermalization time in each bath. Its length must match
+        the number of bath in the system.
     """
     def __init__(self, energy, fraction, tau_therm):
 

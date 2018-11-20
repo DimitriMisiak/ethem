@@ -425,8 +425,8 @@ def nep_to_res(freq_array, nep_array, flim):
     finf, fsup = flim
     invres_array = 4. / nep_array
 
-    inf_index = max(np.where(freq_array<finf)[0])
-    sup_index = min(np.where(freq_array>fsup)[0])
+    inf_index = max(np.where(freq_array<=finf)[0])
+    sup_index = min(np.where(freq_array>=fsup)[0])
 
     invres_trapz = invres_array[inf_index:sup_index]
     freq_trapz = freq_array[inf_index:sup_index]
