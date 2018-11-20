@@ -39,9 +39,7 @@ fs = 1e3
 #==============================================================================
 # STEADY STATE SOLUTION
 #==============================================================================
-sol_ss = eth.solve_sse(evad)
-
-
+sol_ss = (eth.solve_sse(evad)).x
 
 ##==============================================================================
 ## SYSTEM PERTURBATION
@@ -73,7 +71,7 @@ sol_ss = eth.solve_sse(evad)
 ##        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
 ##})
 #
-#edict = eth.dict_sse(evad)
+edict = eth.dict_sse(evad)
 #
 ## time and freq array
 #fi_time_array = np.arange(0, L, fs**-1)
