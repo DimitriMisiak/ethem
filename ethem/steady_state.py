@@ -15,63 +15,6 @@ from .core_classes import System
 from .et_classes import ThermalBath, Thermostat, Capacitor
 
 
-def solve_sse(eval_dict, x0=None, safe_odeint=True, **kwargs):
-    """ Solve the steady-state for the eth.System, automatically fetching
-    the initial vector and the system of equations.
-
-    Parameters
-    ----------
-    eval_dict :dict
-        Evaluation dictionnary. Contains the evaluation values
-        for the system characteristics symbols.
-    x0 : array_like, optional
-        Initial vector for the resolution. By default, set to None. For a x0
-        set to None, the initial vector is returned by the function
-        eth.phi_init.
-    safe_odeint : bool, optional
-        Switch on and off the use of the numerical integration with odeint.
-        By default, set to True, using odeint.
-
-    **kwargs parameters are passed to the steady-state solver solve_see_perf.
-
-    Return
-    ------
-    sol :scipy.optimize.optimize.OptimizeResult
-        The solution represented as a OptimizeResult object.
-        Important attributes are 'x' the solution array, 'success' a boolean
-        flag indicating if the algorithm exited successfully and 'message'
-        which describes the cause of the termination.
-
-    See also:
-    =========
-    eth.phi_init, eth.solve_sse_perf
-    """
-    # Quantities to be evaluated by the resolution
-    phi = System.phi_vect
-
-    if x0 is None:
-        x0 = phi_init(eval_dict)
-    else:
-        # checking that the initial vector is adapted in length
-        assert len(phi) == len(x0)
-
-    # Steady state equations
-    eteq = System.eteq.subs(eval_dict)
-
-    # checking that all symbols the desired symbols are evaluated
-    # if an error is raised, a term is missing from the given dictionnary
-    assert set(phi) == set(eteq.free_symbols)
-
-    eteq_list = list(eteq)
-
-    # process the sympy equations into a function adaptated to scipy root
-    funk = sy.lambdify(phi, eteq_list, 'math')
-    system_eq = lambda x: funk(*x)
-
-    sol = solve_sse_perf(system_eq, x0, safe_odeint, **kwargs)
-
-    return sol
-
 def solve_sse_perf(fun, x0, safe_odeint=True, **kwargs):
     """ Solve the stationnary state of the given system of equations, using
     a numerical integration and then a root finder from a given starting
@@ -121,6 +64,163 @@ def solve_sse_perf(fun, x0, safe_odeint=True, **kwargs):
     return sol
 
 
+def solve_sse(eval_dict, x0=None, safe_odeint=True, **kwargs):
+    """ Solve the steady-state for the eth.System, automatically fetching
+    the initial vector and the system of equations.
+
+    Parameters
+    ----------
+    eval_dict :dict
+        Evaluation dictionnary. Contains the evaluation values
+        for the system characteristics symbols.
+    x0 : array_like, optional
+        Initial vector for the resolution. By default, set to None. For a x0
+        set to None, the initial vector is returned by the function
+        eth.phi_init.
+        Fixing x0 requires some comprehension from the user, but is faster.
+    safe_odeint : bool, optional
+        Switch on and off the use of the numerical integration with odeint.
+        By default, set to True, using odeint.
+
+    **kwargs parameters are passed to the steady-state solver solve_see_perf.
+
+    Return
+    ------
+    sol :scipy.optimize.optimize.OptimizeResult
+        The solution represented as a OptimizeResult object.
+        Important attributes are 'x' the solution array, 'success' a boolean
+        flag indicating if the algorithm exited successfully and 'message'
+        which describes the cause of the termination.
+
+    See also
+    --------
+    eth.phi_init, eth.solve_sse_perf
+    """
+    # Quantities to be evaluated by the resolution
+    phi = System.phi_vect
+
+    if x0 is None:
+        x0 = phi_init(eval_dict)
+    else:
+        # checking that the initial vector is adapted in length
+        assert len(phi) == len(x0)
+
+    # Steady state equations
+    eteq = System.eteq.subs(eval_dict)
+
+    # checking that all symbols the desired symbols are evaluated
+    # if an error is raised, a term is missing from the given dictionnary
+    assert set(phi) == set(eteq.free_symbols)
+
+    eteq_list = list(eteq)
+
+    # process the sympy equations into a function adaptated to scipy root
+    funk = sy.lambdify(phi, eteq_list, 'math')
+    system_eq = lambda x: funk(*x)
+
+    sol = solve_sse_perf(system_eq, x0, safe_odeint, **kwargs)
+
+    return sol
+
+
+def solve_sse_param(param, eval_dict):
+    """ Return an auxiliary function solving the steady-state of eth.System
+    for a configuration of the given parameters. This is efficient to
+    compute current-voltage curve or do multiple resolution of the
+    steady-state.
+
+    Parameters
+    ----------
+    param : tuple of sympy.symbols
+        Tuple of symbols associated to the parameters of the returned function.
+        In orde to quickly compute a IV curve, this param should be:
+        (cryo_temp, bias_voltage).
+    eval_dict : dict
+        Evaluation dictionnary. Contains the evaluation values
+        for the system characteristics symbols.
+
+    Others settings of the steady-state resolution are passed as parameters
+    for the returned function. See solve_sse_fun doc.
+
+    Return
+    ------
+    sol_see_fun : function
+        Actual function solving the steady state with the given parameters
+        values. See its doc for more info.
+
+    See also
+    --------
+    Doc of the auxiliary returned function solve_sse_fun
+    eth.phi_init, eth.solve_sse_perf
+    """
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    phi = tuple(System.phi_vect)
+    nphi = len(phi)
+
+    eteq_list = list((System.eteq).subs(char_dict))
+    eteq_lambda = sy.lambdify(phi+param, eteq_list, 'math')
+
+    def solve_sse_fun(x, phi0=None, safe_odeint=True, **kwargs):
+        """ Solve the steady-state for the eth.System according to the given
+        configuration x.
+
+        Parameters
+        ----------
+        x : tuple of floats
+            Values for the parameters param.
+        phi0 : array_like, optional
+            Initial vector for the resolution. By default, set to None.
+            For a phi0 set to None, the initial vector is returned by a
+            custom routine using eth.phi_init, checking the parameters of
+            the original function to build a proper phi0.
+        safe_odeint : bool, optional
+            Switch on and off the use of the numerical integration with odeint.
+            By default, set to True, using odeint.
+
+        **kwargs parameters are passed to the steady-state
+        solver solve_see_perf.
+
+        Return
+        ------
+        sol :scipy.optimize.optimize.OptimizeResult
+            The solution represented as a OptimizeResult object.
+            Important attributes are 'x' the solution array, 'success' a
+            boolean flag indicating if the algorithm exited successfully
+            and 'message' which describes the cause of the termination.
+
+        See also
+        --------
+        eth.phi_init, eth.solve_sse_perf, eth.solve_sse_param
+        """
+        assert len(x) == npar
+
+        if phi0 is None:
+            param_dict = {s:v for s,v in zip(param, x)}
+            char_dict.update(param_dict)
+            phi0 = phi_init(char_dict)
+        else:
+            assert len(phi0) == nphi, "Invalid initial vector size."
+
+        def aux(phi):
+            args = tuple(phi) + x
+            return eteq_lambda(*args)
+
+        sol = solve_sse_perf(aux, phi0)
+
+        return sol
+
+    return solve_sse_fun
+
+
 def phi_init(eval_dict):
     """ Return the intial vector used for the search of the steady-state
     solution. For the capacitor, the initial voltage is set to 0. For the
@@ -143,7 +243,9 @@ def phi_init(eval_dict):
     v0 = 0.0 #V
     t0 = 0.0 #K
 
+    # retreive all the Thermostat in the System
     thermo_list = System.subclass_list(Thermostat)
+    # keep only the pure Thermostas class, not the subclass
     pure_list = list(set(thermo_list) - set(bath_list))
     if len(pure_list):
         temp_list = [(b.temperature).subs(eval_dict) for b in pure_list]

@@ -181,7 +181,7 @@ evad_sys = {load.resistivity : 2e9, # Ohms
             epcoup.cond_expo : 6., # 1
             leak.cond_alpha : 5e-3, # W.K-4.cm-2
             leak.cond_expo : 4., # 1
-            capa.capacity : 5e-12, # F
+            capa.capacity : 1e-20, # F
             abso.mass : 820, # g
             elntd.length :0.4, # cm
             elntd.width :0.4, # cm
@@ -192,7 +192,7 @@ evad_sys = {load.resistivity : 2e9, # Ohms
             bias.voltage : 4.54, #V
 }
 
-evad_per = {tau_therm : 4.03e-3, # s
+evad_per = {tau_therm : 1e-20, # s
             energy : 1e3 * 1.6e-19, # J
             eps : 0., #fraction
 }

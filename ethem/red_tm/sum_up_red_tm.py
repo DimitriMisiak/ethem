@@ -9,16 +9,13 @@ nbsi_solo and nbsi_duo detectors.
 
 # adding ethem module path to the pythonpath
 import sys
-from os.path import dirname, abspath
-PATH = dirname(dirname(dirname(abspath(__file__))))
-
-sys.path.append( PATH )
-
-import ethem as eth
-
+import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg as LA
+from os.path import dirname, abspath
+
+import ethem as eth
 
 from config_red_tm import evad
 
@@ -39,39 +36,83 @@ fs = 1e3
 #==============================================================================
 # STEADY STATE SOLUTION
 #==============================================================================
-sol_ss = (eth.solve_sse(evad)).x
+# checking the quantities at steady state
+edict = eth.dict_sse(evad)
 
-##==============================================================================
-## SYSTEM PERTURBATION
-##==============================================================================
-#per = eth.System.perturbation
-#
-##==============================================================================
-## NUMERICAL INTEGRATION (NI)
-##==============================================================================
-## temporal
-#ni_time_array, ni_pulse_array = eth.num_int(per.matrix, evad, sol_ss,
-#                                            L=L, fs=fs)
-#
-## fft freq
-#ni_freq_fft = eth.temp_to_fft(ni_time_array)
-#ni_pulse_fft = np.fft.fft(ni_pulse_array)
-#
-#ni_freq_fftshift = np.fft.fftshift(ni_freq_fft)
-#ni_pulse_fftshift = np.fft.fftshift(ni_pulse_fft)
-#
-## psd freq
-#ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
+sol_ss = (eth.solve_sse(evad)).x
+# sol_ss is OK
+CA = eth.System.ThermalBath_a.th_capacity.subs(edict)
+# CA is OK.
+CP = eth.System.ThermalBath_p.th_capacity.subs(edict)
+# CP is OK.
+CE = eth.System.ThermalBath_ntd.th_capacity.subs(edict)
+# CE is OK
+Gep = eth.System.ThermalLink_ep.conductance.subs(edict)
+# Gep is OK
+Gglue = eth.System.ThermalLink_glue.conductance.subs(edict)
+# Gglue is OK
+Gleak = eth.System.ThermalLink_leak.conductance.subs(edict)
+# Gleak is OK
+R = eth.System.Resistor_ntd.resistivity.subs(edict)
+# R is OK
+
+#==============================================================================
+# IV CURVES
+#==============================================================================
+t_array = np.linspace(0.012, 0.050, 10)
+v_array = 10**np.linspace(np.log10(0.02), np.log10(50), 100)
+
+param = (
+        eth.System.Thermostat_b.temperature,
+        eth.System.Voltstat_b.voltage,
+)
+
+ss_point = eth.solve_sse_param(param, evad)
+
+iv_dict = dict()
+for temp in tqdm.tqdm(t_array):
+    iv_list = list()
+    for volt in v_array:
+        sol = ss_point((temp, volt))
+        iv_list.append(sol.x[-1])
+    iv_dict[temp] = iv_list
+
+plt.figure()
+
+temp_list = iv_dict.keys()
+temp_list.sort()
+for temp in temp_list:
+    plt.loglog(v_array, iv_dict[temp], label='{0:.4f} K'.format(temp))
+
+plt.grid(True)
+plt.legend()
+
+
+#==============================================================================
+# SYSTEM PERTURBATION
+#==============================================================================
+per = eth.System.perturbation
+
+#==============================================================================
+# NUMERICAL INTEGRATION (NI)
+#==============================================================================
+# temporal
+ni_time_array, ni_pulse_array = eth.num_int(per.matrix, evad, sol_ss,
+                                            L=L, fs=fs)
+
+# fft freq
+ni_freq_fft = eth.temp_to_fft(ni_time_array)
+ni_pulse_fft = np.fft.fft(ni_pulse_array)
+
+ni_freq_fftshift = np.fft.fftshift(ni_freq_fft)
+ni_pulse_fftshift = np.fft.fftshift(ni_pulse_fft)
+
+# psd freq
+ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
 ###==============================================================================
 ### FREQUENCY INVERSION
 ###==============================================================================
-##edict = evad.copy()
-##edict.update({
-##        ntd.temperature: sol_ss[eth.System.bath_list.index(ntd)],
-##        abso.temperature: sol_ss[eth.System.bath_list.index(abso)],
-##})
-#
-edict = eth.dict_sse(evad)
+#edict = eth.dict_sse(evad)
 #
 ## time and freq array
 #fi_time_array = np.arange(0, L, fs**-1)
