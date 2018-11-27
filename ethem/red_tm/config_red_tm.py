@@ -192,7 +192,7 @@ evad_sys = {load.resistivity : 2e9, # Ohms
             bias.voltage : 4.54, #V
 }
 
-evad_per = {tau_therm : 1e-20, # s
+evad_per = {tau_therm : 1e-4, # s
             energy : 1e3 * 1.6e-19, # J
             eps : 0., #fraction
 }
