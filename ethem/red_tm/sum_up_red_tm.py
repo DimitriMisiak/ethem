@@ -1,4 +1,4 @@
-9#!/usr/bin/env python2
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Sum up all the possibility of the ethem package first applied to the
@@ -24,7 +24,7 @@ plt.close('all')
 #==============================================================================
 # PARAMETERS
 #==============================================================================
-L = 100
+L = 1
 ### PROBLEM, RESOLUTION depends on the window length drastically
 # 14557 eV for L=1
 # 20535 eV for L=2
@@ -335,16 +335,28 @@ full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
 #nep_array = full_array / fi_pulse_psd[ref_ind]
 nep_freq_array, nep_array = eth.nep_ref(per.matrix, edict, fs, L, ref_bath)
 
-# true nep search
+ref_pulse_ft = eth.response_event_ft(per.matrix, edict, fs)(nep_freq_array)[ref_ind]
+ref_sensitivity = np.abs(ref_pulse_ft)**2
 
-freq_ps, ps_welch = welch(td_pulse_array, fs,
-                                window='boxcar', nperseg=int(L*fs),
-                                scaling='spectrum')
+# experimental nep and sensitivity
+exp_pulse_array = td_pulse_array[ref_ind]
+exp_pulse_fft = np.fft.fft(exp_pulse_array)
 
-freq_ps = freq_ps[1:]
-ps_welch = ps_welch[:,1:]
+#exp_pulse_fft = fi_pulse_fft[ref_ind]
 
-nep_true = full_array / ps_welch[-1]
+exp_pulse_ft = exp_pulse_fft[1:nep_freq_array.shape[0]+1] / fs
+exp_sensitivity = np.abs(exp_pulse_ft)**2
+
+## true nep search
+#
+#freq_ps, ps_welch = welch(td_pulse_array, fs,
+#                                window='boxcar', nperseg=int(L*fs),
+#                                scaling='spectrum')
+#
+#freq_ps = freq_ps[1:]
+#ps_welch = ps_welch[:,1:]
+
+nep_true = full_array / exp_sensitivity
 
 
 
@@ -412,7 +424,9 @@ ax_ref[0].set_title('Response PSD ; NEP ; 1/NEP^2')
 #ax_ref[0].plot(fi_freq_psd, fi_pulse_psd[ref_ind], label='1keV pulse',
 #      color='k', lw=5.)
 
-ax_ref[0].plot(ref_freq_psd, ref_pulse_psd[ref_ind], label='1keV pulse',
+ax_ref[0].plot(ref_freq_psd, ref_sensitivity, label='1keV pulse',
+      color='k', lw=5.)
+ax_ref[0].plot(ref_freq_psd, exp_sensitivity, label='exp. 1keV pulse',
       color='k', lw=5.)
 
 for k,v in psd_eval_dict.iteritems():
@@ -442,99 +456,5 @@ for i in range(3):
 fig_ref.legend()
 fig_ref.tight_layout(rect=(0., 0., 0.8, 1.))
 fig_ref.show()
-
-
-##==============================================================================
-### PLOT
-###==============================================================================
-#num = len(eth.System.bath_list)
-#fig, ax = plt.subplots(ncols=3, nrows=num, num='NUMERICAL INTEGRATION', figsize=(17,7))
-#
-#for i in range(num):
-#    # NI
-#    ax[i,0].plot(ni_time_array, ni_pulse_array[i], label='NI')
-#    ax[i,0].plot(fi_time_array, fi_pulse_array[i], label='FI')
-#    ax[i,0].grid(True)
-##    ax[i,0].legend(title=tau_msg)
-#    ax[i,0].set_title('Temporal')
-#    ax[i,0].set_xlabel('Time [s]')
-#    ax[i,0].set_ylabel('Temperature [K]')
-#
-#    ax[i,1].plot(ni_freq_fftshift, np.real(ni_pulse_fftshift)[i], label='Real NI')
-#    ax[i,1].plot(ni_freq_fftshift, np.imag(ni_pulse_fftshift)[i], label='Imag NI')
-#    ax[i,1].plot(fi_freq_fftshift, np.real(fi_pulse_fftshift)[i], label='Real FI')
-#    ax[i,1].plot(fi_freq_fftshift, np.imag(fi_pulse_fftshift)[i], label='Imag FI')
-#    ax[i,1].set_xscale('symlog')
-#    ax[i,1].grid(True)
-##    ax[i,1].legend()
-#    ax[i,1].set_title('FFT')
-#    ax[i,1].set_xlabel('Frequency [Hz]')
-#    ax[i,1].set_ylabel('Temperature [K]')
-#
-#    ax[i,2].plot(ni_freq_psd, ni_pulse_psd[i], label='NI')
-#    ax[i,2].plot(fi_freq_psd, fi_pulse_psd[i], label='FI')
-#    #ax[i,2].loglog(freq_welch, psd_welch, label='welch')
-#    for k,v in psd_eval_dict.iteritems():
-#        ax[i,2].plot(fi_freq_psd, v[i], label=k)
-#
-#    if i == ref_ind:
-#
-#        for k,v in obs_eval_dict.iteritems():
-#            ax[i,2].plot(fi_freq_psd, v, label=k)
-#
-#        ax[i,2].plot(fi_freq_psd, full_array, label='full')
-#
-#    for f in f0_array:
-#        ax[i,2].axvline(f, ls=':', color='k')
-#    ax[i,2].set_xscale('log')
-#    ax[i,2].set_yscale('log')
-#    ax[i,2].grid(True)
-##    ax[i,2].legend(title=f0_msg)
-#    ax[i,2].set_title('PSD')
-#    ax[i,2].set_xlabel('Frequency [Hz]')
-#    ax[i,2].set_ylabel('PSD [$K^2/Hz$]')
-#
-#fig.tight_layout()
-#fig.show()
-#
-##
-#fig_ref, ax_ref = plt.subplots(nrows=3, num='REF BATH PLOT', figsize=(7,10))
-#
-#ax_ref[0].set_title('Response PSD ; NEP ; 1/NEP^2')
-#
-#ax_ref[0].plot(fi_freq_psd, fi_pulse_psd[ref_ind], label='1keV pulse')
-#
-#for k,v in psd_eval_dict.iteritems():
-#    ax_ref[0].plot(fi_freq_psd, v[ref_ind], label=k)
-#
-#for k,v in obs_eval_dict.iteritems():
-#    ax_ref[0].plot(fi_freq_psd, v, label=k)
-#ax_ref[0].plot(fi_freq_psd, full_array, label='Tot Noise')
-#
-#ax_ref[1].plot(fi_freq_psd, nep_array, label='nep')
-#ax_ref[1].set_ylabel('NEP')
-#
-#ax_ref[2].plot(fi_freq_psd, invres_array, label='invres')
-#ax_ref[2].set_ylabel('$1/NEP^2$')
-#ax_ref[2].fill_between(freq_trapz, invres_trapz, color='slateblue', alpha=0.4)
-#
-#for i in range(3):
-#    ax_ref[i].set_xlabel('Frequency [Hz]')
-#    ax_ref[i].set_xscale('log')
-#    ax_ref[i].set_yscale('log')
-#    ax_ref[i].grid(True)
-##    ax_ref[i].legend()
-#    if i == 2:
-#        ax_ref[i].legend(title=res_msg)
-#
-#fig.legend()
-#fig_ref.tight_layout()
-#fig.show()
-
-
-
-
-
-
 
 

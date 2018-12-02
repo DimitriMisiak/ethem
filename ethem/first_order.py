@@ -69,7 +69,8 @@ def per_fft(per):
 
 
 def per_fft_fun(per, eval_dict, fs):
-    """ Return a function accepting a numpy.array with the broadcasting
+    """ Return a FFT function, as in Discrete Fourier Transform function.
+    Return a function accepting a numpy.array with the broadcasting
     ability of numpy.
     The function returns the event perturbation for the given frequencies.
 
@@ -93,6 +94,43 @@ def per_fft_fun(per, eval_dict, fs):
 
     # multiplication by the sampling frequency to respect homogeneity later...
     perf_num = perf.subs(eval_dict) * fs
+#    perf_num = perf.subs(eval_dict)
+
+    # FIXING SYMPY LAMBDIFY BROADCASTING
+    perf_num[0] += 1e-40 * System.freq
+
+    perf_fun_simple = sy.lambdify(System.freq, perf_num, modules="numpy")
+
+    perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
+
+    return perf_fun_array
+
+
+def per_ft_fun(per, eval_dict, fs):
+    """ Return a continuous fourier transform function.
+    Return a function accepting a numpy.array with the broadcasting
+    ability of numpy.
+    The function returns the event perturbation for the given frequencies.
+
+    Parameters
+    ==========
+    per : sympy.matrices.dense.MutableDenseMatrix
+        Event perturbation, should be a function of time.
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+
+    Return
+    ======
+    perf_fun_array : Function taking an numpy.array as parameter and
+        returnign an array of matrices,
+        mimicking the broadcasting ability of numpy.
+    """
+    perf = per_fft(per)
+
+    perf_num = perf.subs(eval_dict)
 
     # FIXING SYMPY LAMBDIFY BROADCASTING
     perf_num[0] += 1e-40 * System.freq
@@ -138,6 +176,43 @@ def response_event(per, eval_dict, fs):
         return sv_array.T
 
     return sens_fun
+
+
+def response_event_ft(per, eval_dict, fs):
+    """ Return the response function (FT be careful !!) of the system to
+    a given perturbation in the frequency space.
+
+    Parameters
+    ==========
+    per : Sympy matrix
+        Power perturbation of the system. Its shape must matches the one
+        of System.admittance_matrix**-1
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    fs : float
+        Sampling frequency.
+
+    Return
+    ======
+    sens_fun : function
+        Taking the frequency array as parameter, return the response array.
+    """
+    cimeq_fun = impedance_matrix_fun(eval_dict)
+
+    perf_fun = per_ft_fun(per, eval_dict, fs)
+
+    def sens_fun(frange):
+        cimeq_array = cimeq_fun(frange)
+
+        perf_array = perf_fun(frange)
+
+        sv_array = np.einsum('ijk, ik -> ij', cimeq_array, perf_array)
+
+        return sv_array.T
+
+    return sens_fun
+
 
 
 def psd_response_event(per, eval_dict, fs, L):
@@ -385,16 +460,18 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     ethem.psd_response_event_ref, ethem.noise_tot_fun
 
     """
-    freq_array, pulse_array = psd_response_event_ref(
-            per, eval_dict, fs, L, ref_bath
-    )
+    ref_ind = System.bath_list.index(ref_bath)
+
+    freq_array = np.linspace(1, fs/2., int(fs*L/2.))
+
+    pulse_fun = response_event_ft(per, eval_dict, fs)
+    pulse_array = pulse_fun(freq_array)[ref_ind]
 
     noise_fun = noise_tot_fun(ref_bath, eval_dict)
 
     noise_array = noise_fun(freq_array)
 
-    nep_array = noise_array / pulse_array
-
+    nep_array = noise_array / np.abs(pulse_array)**2
     return freq_array, nep_array
 
 
