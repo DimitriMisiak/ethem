@@ -78,11 +78,108 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     return (time, sol_per.T,)
 
 
+def num_int_param(param,  eval_dict, fs, L):
+#(per, eval_dict, x0, fs=1e3, L=1.):
+
+    """ Return an auxiliary function numerically integrating the equations
+    of eth.System for a configuration of the given parameters.
+    This is efficient to compare different configurations of parameters.
+
+    Parameters
+    ----------
+    param : tuple of sympy.symbols
+        Tuple of symbols associated to the parameters of the returned function.
+        In orde to quickly compute a IV curve, this param should be:
+        (cryo_temp, bias_voltage).
+    eval_dict : dict
+        Evaluation dictionnary. Contains the evaluation values
+        for the system characteristics symbols.
+    fs : float, optionnal
+        Sampling frequency. By default, 1e3 Hz.
+    L : float, optionnal
+        Time length of the window in second. By default, 1 second.
+
+    Others settings of the steady-state resolution are passed as parameters
+    for the returned function. See solve_sse_fun doc.
+
+    Return
+    ------
+    sol_see_fun : function
+        Actual function solving the steady state with the given parameters
+        values. See its doc for more info.
+
+    See also
+    --------
+    Doc of the auxiliary returned function solve_sse_fun
+    eth.phi_init, eth.solve_sse_perf
+    """
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    trange = np.arange(0, L, fs**-1)
+
+    t = System.time
+
+    capa_matrix = System.capacity_matrix
+
+    per = System.perturbation
+    per_arg = capa_matrix**-1 * per.matrix / sy.Heaviside(t)
+
+    phi = tuple(System.phi_vect)
+    nphi = len(phi)
+
+    eteq = System.eteq
+
+    eteq_num = eteq.subs(char_dict)
+    per_num = per_arg.subs(char_dict)
+
+    eq_list = list(eteq_num + per_num)
+    eq_lambda = sy.lambdify(phi+(t,)+param, eq_list, 'math')
+
+    def num_int_fun(p, x0):
+        """ Numerical integration of the electro-thermal equation with
+        power perturbation for the given evaluation dictionnary.
+
+        Parameters
+        ----------
+        p : tuple of floats
+            Values for the parameters param.
+        x0 : array_like
+            Initial vector for the integration. Should be the solution of
+            the steady state, if not this is equivalent to add a Dirac perturbation
+            to the system.
+
+        """
+        assert len(p) == npar
+        assert len(x0) == nphi
+
+        def aux(phi, t):
+            args = tuple(phi) + (t,) + p
+            return eq_lambda(*args)
+
+        sol = odeint(aux, x0, trange,
+                     rtol=1e-15, atol=1e-15, hmax=fs**-1)
+
+        # substracting the initial vector
+        sol_per = sol-x0
+
+        return sol_per.T
+
+    return num_int_fun
+
 def num_int_proto(per, eval_dict, x0, fs=1e3, L=1., max_step_coef=10.):
     """ Same as num_int but using the solve_ivp supposed to be more
     sofisticated than odeint. However this function of numerical integration
     is very slow..
     So not using this !
+    Just here for curiosity purpose...
     """
     x0 = np.array(x0)
 

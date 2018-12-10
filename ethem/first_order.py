@@ -214,7 +214,6 @@ def response_event_ft(per, eval_dict, fs):
     return sens_fun
 
 
-
 def psd_response_event(per, eval_dict, fs, L):
     """ Return the psd arrays of the system response.
 
