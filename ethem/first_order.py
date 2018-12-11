@@ -13,7 +13,7 @@ from .evaluation import lambda_fun_mat, lambda_fun
 from .core_classes import System
 from .noise import noise_flux_fun, noise_obs_fun
 from .psd import psd
-
+from .steady_state import solve_sse_param
 
 def impedance_matrix_fun(eval_dict):
     """ Return a function accepting an numpy.array with the broadcasting
@@ -42,6 +42,60 @@ def impedance_matrix_fun(eval_dict):
     admat_fun = lambda f: np.linalg.inv(lambda_fun_mat(admat_funk, f))
 
     return admat_fun
+
+
+def impedance_matrix_param(param, eval_dict):
+    """ Return a function accepting an numpy.array with the broadcasting
+    ability of numpy.
+    The function returns the response matrix, or complex impedance matrix
+    for the given frequancies.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary in first oder approximation i.e. evaluated
+        for the main_quant in phi_vect.
+    frange : 1d numpy.ndarray
+        Numpy array of the frequencies where to evaluate the complex impedance
+        function.
+
+    Returns
+    =======
+    cimeq_fun :Function taking an numpy.array as parameter and returnign an
+        array of matrices, mimicking the broadcasting ability of numpy.
+    """
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    admat = System.admittance_matrix
+    admat_num = admat.subs(char_dict)
+
+    phi = tuple(System.phi_vect)
+
+    admat_simple = sy.lambdify((System.freq,)+phi+param, admat_num, modules="numpy")
+
+    ss_fun = solve_sse_param(param, eval_dict)
+
+    def impedance_matrix_fun(p):
+        assert len(p) == npar
+
+        sol_ss = ss_fun(p).x
+
+        args = tuple(sol_ss) + tuple(p)
+        admat_complex = lambda f: admat_simple(f, *args)
+
+        admat_fun = lambda f: np.linalg.inv(lambda_fun_mat(admat_complex, f))
+
+        return admat_fun
+
+    return impedance_matrix_fun
 
 
 def per_fft(per):
@@ -106,7 +160,7 @@ def per_fft_fun(per, eval_dict, fs):
     return perf_fun_array
 
 
-def per_ft_fun(per, eval_dict, fs):
+def per_ft_fun(per, eval_dict):
     """ Return a continuous fourier transform function.
     Return a function accepting a numpy.array with the broadcasting
     ability of numpy.
@@ -140,6 +194,69 @@ def per_ft_fun(per, eval_dict, fs):
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 
     return perf_fun_array
+
+
+def per_param(param, eval_dict):
+
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    per_num = (System.perturbation.matrix).subs(char_dict)
+
+    perf_fun_simple = sy.lambdify((System.time,)+param, per_num,
+                                  ['numpy', {'Heaviside': lambda x: np.heaviside(x,1)}])
+
+    def per_fun(p):
+
+        assert len(p) == npar
+        perf_fun_complex = lambda t: perf_fun_simple(t,*p)
+
+        perf_fun_array = lambda trange: lambda_fun(perf_fun_complex, trange)
+
+        return perf_fun_array
+
+
+    return per_fun
+
+
+def perf_param(param, eval_dict):
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    perf = per_fft(System.perturbation.matrix)
+
+    perf_num = perf.subs(char_dict)
+
+    # FIXING SYMPY LAMBDIFY BROADCASTING
+    perf_num[0] += 1e-40 * System.freq
+
+    perf_fun_simple = sy.lambdify((System.freq,)+param, perf_num, 'numpy')
+
+    def per_fun(p):
+
+        assert len(p) == npar
+        perf_fun_complex = lambda f: perf_fun_simple(f,*p)
+
+        perf_fun_array = lambda frange: lambda_fun(perf_fun_complex, frange)
+
+        return perf_fun_array
+
+
+    return per_fun
 
 
 def response_event(per, eval_dict, fs):
@@ -178,7 +295,7 @@ def response_event(per, eval_dict, fs):
     return sens_fun
 
 
-def response_event_ft(per, eval_dict, fs):
+def response_event_ft(per, eval_dict):
     """ Return the response function (FT be careful !!) of the system to
     a given perturbation in the frequency space.
 
@@ -190,8 +307,6 @@ def response_event_ft(per, eval_dict, fs):
     eval_dict : dict
         Evaluation dictionnary in first oder approximation i.e. evaluated
         for the main_quant in phi_vect.
-    fs : float
-        Sampling frequency.
 
     Return
     ======
@@ -200,7 +315,7 @@ def response_event_ft(per, eval_dict, fs):
     """
     cimeq_fun = impedance_matrix_fun(eval_dict)
 
-    perf_fun = per_ft_fun(per, eval_dict, fs)
+    perf_fun = per_ft_fun(per, eval_dict)
 
     def sens_fun(frange):
         cimeq_array = cimeq_fun(frange)
@@ -212,6 +327,32 @@ def response_event_ft(per, eval_dict, fs):
         return sv_array.T
 
     return sens_fun
+
+
+def response_event_param(param, eval_dict):
+
+    cimeq_param_fun = impedance_matrix_param(param, eval_dict)
+    perf_param_fun = perf_param(param, eval_dict)
+
+
+    def response_event_fun(p):
+
+        cimeq_fun = cimeq_param_fun(p)
+
+        perf_fun = perf_param_fun(p)
+
+        def sens_fun(frange):
+            cimeq_array = cimeq_fun(frange)
+
+            perf_array = perf_fun(frange)
+
+            sv_array = np.einsum('ijk, ik -> ij', cimeq_array, perf_array)
+
+            return sv_array.T
+
+        return sens_fun
+
+    return response_event_fun
 
 
 def psd_response_event(per, eval_dict, fs, L):
@@ -463,7 +604,7 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
 
     freq_array = np.linspace(1, fs/2., int(fs*L/2.))
 
-    pulse_fun = response_event_ft(per, eval_dict, fs)
+    pulse_fun = response_event_ft(per, eval_dict)
     pulse_array = pulse_fun(freq_array)[ref_ind]
 
     noise_fun = noise_tot_fun(ref_bath, eval_dict)
@@ -473,6 +614,32 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     nep_array = noise_array / np.abs(pulse_array)**2
     return freq_array, nep_array
 
+
+def nep_ref_param(param, eval_dict, per, fs, L, ref_bath):
+
+    ref_ind = System.bath_list.index(ref_bath)
+
+    freq_array = np.linspace(1, fs/2., int(fs*L/2.))
+
+    pulse_fun = response_event_param(param, eval_dict, per, fs)
+
+    noise_fun = noise_tot_fun_param(param, eval_dict, ref_bath)
+
+
+#    pulse_fun = response_event_ft(per, eval_dict, fs)
+#
+#
+#    noise_fun = noise_tot_fun(ref_bath, eval_dict)
+
+    def nep_ref_fun(p):
+
+        pulse_array = pulse_fun(p)(freq_array)[ref_ind]
+        noise_array = noise_fun(p)(freq_array)
+
+        nep_array = noise_array / np.abs(pulse_array)**2
+        return freq_array, nep_array
+
+    return nep_ref_fun
 
 def nep_to_res(freq_array, nep_array, flim):
     """ Return the resolution value from the integration of 1/nep_array^2.
@@ -550,3 +717,16 @@ def res_ref(per, eval_dict, fs, L, ref_bath, flim):
     res = nep_to_res(freq_array, nep_array, flim)
 
     return res
+
+
+def res_ref_param(param, eval_dict, fs, L, ref_bath, flim):
+#(per, eval_dict, fs, L, ref_bath, flim):
+
+    freq_array, nep_array_fun = nep_ref_param(param, eval_dict, fs, L, ref_bath)
+
+    def res_ref_fun(p):
+        nep_array = nep_array_fun(p)
+        res = nep_to_res(freq_array, nep_array, flim)
+        return res
+
+    return res_ref_fun
