@@ -11,7 +11,7 @@ import sympy as sy
 
 from .evaluation import lambda_fun_mat, lambda_fun
 from .core_classes import System
-from .noise import noise_flux_fun, noise_obs_fun
+from .noise import noise_flux_fun, noise_obs_fun, noise_obs_param
 from .psd import psd
 from .steady_state import solve_sse_param
 
@@ -44,7 +44,7 @@ def impedance_matrix_fun(eval_dict):
     return admat_fun
 
 
-def impedance_matrix_param(param, eval_dict):
+def impedance_matrix_param(param, eval_dict, auto_ss=True):
     """ Return a function accepting an numpy.array with the broadcasting
     ability of numpy.
     The function returns the response matrix, or complex impedance matrix
@@ -81,12 +81,16 @@ def impedance_matrix_param(param, eval_dict):
 
     admat_simple = sy.lambdify((System.freq,)+phi+param, admat_num, modules="numpy")
 
-    ss_fun = solve_sse_param(param, eval_dict)
+    if auto_ss:
+        ss_fun = solve_sse_param(param, eval_dict)
 
-    def impedance_matrix_fun(p):
+    def impedance_matrix_fun(p, sol_ss=[]):
         assert len(p) == npar
 
-        sol_ss = ss_fun(p).x
+        if auto_ss:
+            sol_ss = ss_fun(p).x
+        else:
+            assert len(sol_ss) == len(phi)
 
         args = tuple(sol_ss) + tuple(p)
         admat_complex = lambda f: admat_simple(f, *args)
@@ -531,6 +535,37 @@ def measure_noise(ref_bath, eval_dict):
     return psd_fun_dict
 
 
+def measure_noise_param(param, eval_dict, ref_bath):
+
+#    noise_fun_dict = noise_obs_fun(ref_bath, eval_dict)
+    noise_fun_dict_fun = noise_obs_param(param, eval_dict, ref_bath)
+
+    def measure_noise_fun(p):
+
+        noise_fun_dict = noise_fun_dict_fun(p)
+
+        def psd_fun_maker(n_fun):
+
+            def psd_fun(frange):
+
+                lpsd_array = n_fun(frange)
+
+                # computing the psd from the fft
+                psd_array = np.abs(lpsd_array)**2
+
+                return psd_array
+
+            return psd_fun
+
+        psd_fun_dict = dict()
+        for key, noise_fun in noise_fun_dict.iteritems():
+
+            psd_fun_dict[key] = psd_fun_maker(noise_fun)
+
+        return psd_fun_dict
+
+    return measure_noise_fun
+
 def noise_tot_fun(ref_bath, eval_dict):
     """ Return the total noise psd perturbation function
     in the frequency space.
@@ -569,6 +604,39 @@ def noise_tot_fun(ref_bath, eval_dict):
     return noise_fun
 
 
+def noise_tot_param(param, eval_dict, ref_bath):
+
+    ref_ind = System.bath_list.index(ref_bath)
+
+    obs_dict_fun = measure_noise_param(param, eval_dict, ref_bath)
+    sys_dict_fun = response_noise_param(param, eval_dict)
+
+#    obs_dict = measure_noise(ref_bath, eval_dict)
+#
+#    sys_dict = response_noise(eval_dict)
+
+    def noise_tot_fun(p):
+
+        obs_dict = obs_dict_fun(p)
+        sys_dict = sys_dict_fun(p)
+
+        def noise_fun(frange):
+
+            sys_eval_dict = {k:v(frange) for k,v in sys_dict.iteritems()}
+            obs_eval_dict = {k:v(frange) for k,v in obs_dict.iteritems()}
+
+            full_array = (
+                np.sum(obs_eval_dict.values(), axis=0)
+                + np.sum(sys_eval_dict.values(), axis=0)[ref_ind]
+            )
+
+            return full_array
+
+        return noise_fun
+
+    return noise_tot_fun
+
+
 def nep_ref(per, eval_dict, fs, L, ref_bath):
     """ Return the nep array in the reference bath by computing
     the response psd of the system and the total noise.
@@ -586,7 +654,7 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     L : float
         Time length of the window in second.
     ref_bath : ethem.RealBath
-        Reference bath where the measure takes place.
+        Reference bath where the measure takes place.noise_tot_fun_param
 
     Returns
     =======
@@ -615,15 +683,15 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     return freq_array, nep_array
 
 
-def nep_ref_param(param, eval_dict, per, fs, L, ref_bath):
+def nep_ref_param(param, eval_dict, fs, L, ref_bath):
 
     ref_ind = System.bath_list.index(ref_bath)
 
     freq_array = np.linspace(1, fs/2., int(fs*L/2.))
 
-    pulse_fun = response_event_param(param, eval_dict, per, fs)
+    pulse_fun = response_event_param(param, eval_dict)
 
-    noise_fun = noise_tot_fun_param(param, eval_dict, ref_bath)
+    noise_fun = noise_tot_param(param, eval_dict, ref_bath)
 
 
 #    pulse_fun = response_event_ft(per, eval_dict, fs)

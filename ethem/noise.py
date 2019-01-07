@@ -10,7 +10,7 @@ electro-thermal system.
 import sympy as sy
 from .core_classes import RealBath, System
 from .evaluation import lambda_fun, lambdify_fun
-
+from .steady_state import solve_sse_param
 
 def noise_flux_vects():
     """ Returns a dictionnary of the different noise power affecting
@@ -147,3 +147,50 @@ def noise_obs_fun(ref_bath, eval_dict):
         fun_dict[key] = fun_maker(noise)
 
     return fun_dict
+
+
+def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
+    """ WORK IN PROGRESS """
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    phi = tuple(System.phi_vect)
+
+    noise_dict = ref_bath.noise_obs
+
+    args_lambda = (System.freq,) + phi + param
+
+
+
+    if auto_ss:
+        ss_fun = solve_sse_param(param, eval_dict)
+
+    def noise_obs_fun(p):
+
+        noise_num = noi.subs(char_dict)
+
+        args_lambda = (System.freq,) + phi + param
+        noise_fun_simple = sy.lambdify(args_lambda, noise_num, modules="numpy")
+
+        noise_fun_array = lambda frange: lambdify_fun(noise_fun_simple, frange)
+
+
+        def fun_maker(noi):
+
+            return noise_fun_array
+
+        fun_dict = dict()
+        for key, noise in noise_dict.iteritems():
+
+            fun_dict[key] = fun_maker(noise)
+
+        return fun_dict
+
+    return noise_obs_fun

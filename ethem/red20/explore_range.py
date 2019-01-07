@@ -127,24 +127,26 @@ freq_array = np.array([0,1,2])
 
 
 
-#A = eth.impedance_matrix_param(param, evad)
-#
-#B = A((0.018, 2.))
-#
-##B = impedance_matrix_fun((0.018, 2.))
-#
-#C = B(freq_array)
-#
-#print C
+A = eth.impedance_matrix_param(param, evad, auto_ss=False)
 
+SS = ss_point((0.018,2.)).x
 
-A = eth.response_event_param(param, evad)
+B = A((0.018, 2.), SS)
 
-B = A((0.18, 2.))
+#B = impedance_matrix_fun((0.018, 2.))
 
 C = B(freq_array)
 
 print C
+
+
+#A = eth.response_event_param(param, evad)
+#
+#B = A((0.18, 2.))
+#
+#C = B(freq_array)
+#
+#print C
 
 #### PLOT
 #fig_pulse = plt.figure('pulse')

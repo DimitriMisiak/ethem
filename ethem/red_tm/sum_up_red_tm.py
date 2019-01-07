@@ -238,7 +238,7 @@ handles, labels = fig.gca().get_legend_handles_labels()
 fig.legend(handles, labels, title=tau_msg, loc='right')
 
 #fig.tight_layout(rect=(0.,0.,1.,1.))
-#fig.show()
+#fig.show()age univers
 
 print 'Amplitudes : ', ni_amp, fi_amp, td_amp
 print tau_msg
@@ -335,7 +335,7 @@ full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
 #nep_array = full_array / fi_pulse_psd[ref_ind]
 nep_freq_array, nep_array = eth.nep_ref(per.matrix, edict, fs, L, ref_bath)
 
-ref_pulse_ft = eth.response_event_ft(per.matrix, edict, fs)(nep_freq_array)[ref_ind]
+ref_pulse_ft = eth.response_event_ft(per.matrix, edict)(nep_freq_array)[ref_ind]
 ref_sensitivity = np.abs(ref_pulse_ft)**2
 
 # experimental nep and sensitivity
