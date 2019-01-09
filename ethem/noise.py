@@ -110,6 +110,63 @@ def noise_flux_fun(eval_dict):
     return fun_dict
 
 
+def noise_flux_fun_param(param, eval_dict, auto_ss=True):
+
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    phi = tuple(System.phi_vect)
+
+    noise_dict = noise_flux_vects()
+
+    args_lambda = (System.freq,) + phi + param
+
+    if auto_ss:
+        ss_fun = solve_sse_param(param, eval_dict)
+
+    noise_dict_simple = dict()
+    for key, noi in noise_dict.iteritems():
+
+        # FIXING SYMPY LAMBDIFY BROADCASTING
+        noi[0] += 1e-40 * System.freq
+
+        noise_num = noi.subs(char_dict)
+        noise_fun_simple = sy.lambdify(args_lambda, noise_num, modules="numpy")
+        noise_dict_simple[key] = noise_fun_simple
+
+    def noise_flux_fun_aux(p, sol_ss=[]):
+
+        assert len(p) == npar
+
+        if auto_ss:
+            sol_ss = ss_fun(p).x
+        else:
+            assert len(sol_ss) == len(phi)
+
+        args = tuple(sol_ss) + tuple(p)
+
+        def array_maker(nfun):
+            nfun_complex = lambda f: nfun(f, *args)
+            nfun_array = lambda frange: lambda_fun(nfun_complex, frange)
+            return nfun_array
+
+        noise_flux_dict = dict()
+        for key, nfun in noise_dict_simple.iteritems():
+
+            noise_flux_dict[key] = array_maker(nfun)
+
+        return noise_flux_dict
+
+    return noise_flux_fun_aux
+
+
 def noise_obs_fun(ref_bath, eval_dict):
     """ Returns a dictionnary of the different observationnal noise function
     affecting the system. The keys indicates the source of the noise.
@@ -150,7 +207,7 @@ def noise_obs_fun(ref_bath, eval_dict):
 
 
 def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
-    """ WORK IN PROGRESS """
+
     npar = len(param)
 
     char_dict = eval_dict.copy()
@@ -167,30 +224,37 @@ def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
 
     args_lambda = (System.freq,) + phi + param
 
-
-
     if auto_ss:
         ss_fun = solve_sse_param(param, eval_dict)
 
-    def noise_obs_fun(p):
+    noise_dict_simple = dict()
+    for key, noi in noise_dict.iteritems():
 
         noise_num = noi.subs(char_dict)
-
-        args_lambda = (System.freq,) + phi + param
         noise_fun_simple = sy.lambdify(args_lambda, noise_num, modules="numpy")
+        noise_dict_simple[key] = noise_fun_simple
 
-        noise_fun_array = lambda frange: lambdify_fun(noise_fun_simple, frange)
+    def noise_obs_fun(p, sol_ss=[]):
 
+        assert len(p) == npar
 
-        def fun_maker(noi):
+        if auto_ss:
+            sol_ss = ss_fun(p).x
+        else:
+            assert len(sol_ss) == len(phi)
 
-            return noise_fun_array
+        args = tuple(sol_ss) + tuple(p)
 
-        fun_dict = dict()
-        for key, noise in noise_dict.iteritems():
+        def array_maker(nfun):
+            nfun_complex = lambda f: nfun(f, *args)
+            nfun_array = lambda frange: lambdify_fun(nfun_complex, frange)
+            return nfun_array
 
-            fun_dict[key] = fun_maker(noise)
+        noise_obs_dict = dict()
+        for key, nfun in noise_dict_simple.iteritems():
 
-        return fun_dict
+            noise_obs_dict[key] = array_maker(nfun)
+
+        return noise_obs_dict
 
     return noise_obs_fun

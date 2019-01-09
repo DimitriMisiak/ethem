@@ -11,7 +11,7 @@ import sympy as sy
 
 from .evaluation import lambda_fun_mat, lambda_fun
 from .core_classes import System
-from .noise import noise_flux_fun, noise_obs_fun, noise_obs_param
+from .noise import noise_flux_fun, noise_obs_fun, noise_obs_param, noise_flux_fun_param
 from .psd import psd
 from .steady_state import solve_sse_param
 
@@ -85,6 +85,9 @@ def impedance_matrix_param(param, eval_dict, auto_ss=True):
         ss_fun = solve_sse_param(param, eval_dict)
 
     def impedance_matrix_fun(p, sol_ss=[]):
+        """ Return a function taking in argument a frequency numpy.array and
+        returning an array of impedance matrix evaluated for each frequency.
+        """
         assert len(p) == npar
 
         if auto_ss:
@@ -334,7 +337,9 @@ def response_event_ft(per, eval_dict):
 
 
 def response_event_param(param, eval_dict):
-
+    """ might be possible to speed up the computation with a mutual
+    solve_sse_param and a wise no-use of the auto-ss optionnal parameter.
+    """
     cimeq_param_fun = impedance_matrix_param(param, eval_dict)
     perf_param_fun = perf_param(param, eval_dict)
 
@@ -460,6 +465,43 @@ def response_noise(eval_dict):
     return psd_fun_dict
 
 
+def response_noise_param(param, eval_dict):
+
+    cimeq_param_fun = impedance_matrix_param(param, eval_dict)
+
+    noise_param_fun = noise_flux_fun_param(param, eval_dict)
+
+    def response_noise_fun(p):
+
+        cimeq_fun = cimeq_param_fun(p)
+        noise_fun_dict = noise_param_fun(p)
+
+        def psd_fun_maker(nfun):
+
+            def psd_fun(frange):
+
+                cimeq_array = cimeq_fun(frange)
+                lpsd_array = nfun(frange)
+
+                impact_array = np.einsum('ijk, ik -> ij', cimeq_array, lpsd_array)
+
+                # computing the psd from the fft
+                psd_array = np.abs(impact_array)**2
+
+                return psd_array.T # transposition for a pretty handy return
+
+            return psd_fun
+
+        psd_fun_dict = dict()
+        for key, noise_fun in noise_fun_dict.iteritems():
+
+            psd_fun_dict[key] = psd_fun_maker(noise_fun)
+
+        return psd_fun_dict
+
+    return response_noise_fun
+
+
 def response_noise_ref(eval_dict, ref_bath):
     """ Projection of the ethem.response_noise function on the reference bath
     used for the measure.
@@ -537,12 +579,11 @@ def measure_noise(ref_bath, eval_dict):
 
 def measure_noise_param(param, eval_dict, ref_bath):
 
-#    noise_fun_dict = noise_obs_fun(ref_bath, eval_dict)
-    noise_fun_dict_fun = noise_obs_param(param, eval_dict, ref_bath)
+    noise_param_fun = noise_obs_param(param, eval_dict, ref_bath)
 
     def measure_noise_fun(p):
 
-        noise_fun_dict = noise_fun_dict_fun(p)
+        noise_fun_dict = noise_param_fun(p)
 
         def psd_fun_maker(n_fun):
 
@@ -610,10 +651,6 @@ def noise_tot_param(param, eval_dict, ref_bath):
 
     obs_dict_fun = measure_noise_param(param, eval_dict, ref_bath)
     sys_dict_fun = response_noise_param(param, eval_dict)
-
-#    obs_dict = measure_noise(ref_bath, eval_dict)
-#
-#    sys_dict = response_noise(eval_dict)
 
     def noise_tot_fun(p):
 
@@ -683,33 +720,33 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     return freq_array, nep_array
 
 
-def nep_ref_param(param, eval_dict, fs, L, ref_bath):
+def nep_ref_param(param, eval_dict, ref_bath):
 
     ref_ind = System.bath_list.index(ref_bath)
 
-    freq_array = np.linspace(1, fs/2., int(fs*L/2.))
+    pulse_param = response_event_param(param, eval_dict)
 
-    pulse_fun = response_event_param(param, eval_dict)
-
-    noise_fun = noise_tot_param(param, eval_dict, ref_bath)
-
-
-#    pulse_fun = response_event_ft(per, eval_dict, fs)
-#
-#
-#    noise_fun = noise_tot_fun(ref_bath, eval_dict)
+    noise_param = noise_tot_param(param, eval_dict, ref_bath)
 
     def nep_ref_fun(p):
 
-        pulse_array = pulse_fun(p)(freq_array)[ref_ind]
-        noise_array = noise_fun(p)(freq_array)
+        pulse_fun = pulse_param(p)
+        noise_fun = noise_param(p)
 
-        nep_array = noise_array / np.abs(pulse_array)**2
-        return freq_array, nep_array
+        def nep_ref_array(frange):
+
+            pulse_array = pulse_fun(frange)[ref_ind]
+            noise_array = noise_fun(frange)
+
+            nep_array = noise_array / np.abs(pulse_array)**2
+            return nep_array
+
+        return nep_ref_array
 
     return nep_ref_fun
 
-def nep_to_res(freq_array, nep_array, flim):
+
+def nep_to_res(freq_array, nep_array, flim=None):
     """ Return the resolution value from the integration of 1/nep_array^2.
 
     Parameters
@@ -733,11 +770,16 @@ def nep_to_res(freq_array, nep_array, flim):
     ========
     function used for the numerical integration : numpy.trapz
     """
-    finf, fsup = flim
     invres_array = 4. / nep_array
 
-    inf_index = max(np.where(freq_array<=finf)[0])
-    sup_index = min(np.where(freq_array>=fsup)[0])
+    if flim is None:
+        inf_index = None
+        sup_index = None
+    else:
+        finf, fsup = flim
+
+        inf_index = max(np.where(freq_array<=finf)[0])
+        sup_index = min(np.where(freq_array>=fsup)[0])
 
     invres_trapz = invres_array[inf_index:sup_index]
     freq_trapz = freq_array[inf_index:sup_index]
@@ -788,7 +830,6 @@ def res_ref(per, eval_dict, fs, L, ref_bath, flim):
 
 
 def res_ref_param(param, eval_dict, fs, L, ref_bath, flim):
-#(per, eval_dict, fs, L, ref_bath, flim):
 
     freq_array, nep_array_fun = nep_ref_param(param, eval_dict, fs, L, ref_bath)
 
