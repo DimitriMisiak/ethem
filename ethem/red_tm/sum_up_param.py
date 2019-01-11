@@ -142,6 +142,60 @@ def test_impedance_matrix_param():
 
 #%%
 #==============================================================================
+# EIGEN PARAM
+#==============================================================================
+def test_eigen_param():
+    """ Scripts testing the eigen_param function.
+    Produce 4 plots similar to a crude search for an optimization point.
+    """
+    time_array = np.arange(0., L, fs**-1)
+
+    param_plot = (
+            eth.System.Voltstat_b.voltage,
+            eth.System.Thermostat_b.temperature,
+            eth.System.ThermalLink_ep.cond_alpha,
+            eth.System.ThermalLink_leak.cond_alpha,
+    )
+
+    param_arrays = (
+            10**np.linspace(np.log10(0.02), np.log10(20), 10),
+            np.linspace(0.015, 0.050, 10),
+            10**np.linspace(1, 3, 10),
+            10**np.linspace(-3, -1, 10),
+    )
+
+    ### PLOT
+    fig_iv, ax_iv = plt.subplots(ncols=2, nrows=2,
+                                 num='temporal pulses', figsize=(11, 11))
+    ax_iv = ax_iv.ravel()
+
+    for ind, ax in enumerate(ax_iv):
+
+        param_sym = (
+                param_plot[ind],
+        )
+
+        eigen_param_fun = eth.eigen_param(param_sym, evad, auto_ss=True)
+
+        for p in tqdm.tqdm(param_arrays[ind]):
+
+            tau_array, amp_array, pulse_fun = eigen_param_fun((p,))
+            pulse_array = pulse_fun(time_array)[-1]
+
+            ax.plot(time_array, pulse_array, label='{0:.4f}'.format(p))
+
+        ax.grid(True)
+        ax.set_title(str(param_plot[ind]))
+        ax.set_ylabel('Voltage [V]')
+        ax.set_xlabel('Time [s]')
+        ax.legend(loc='right')
+
+    fig_iv.tight_layout()
+    fig_iv.savefig('output/eigen_param.png')
+
+
+#%%
+#==============================================================================
 # PER PARAM
 #==============================================================================
 def test_per_param():
@@ -530,6 +584,8 @@ if __name__ == '__main__':
 #
 #    test_impedance_matrix_param()
 #
+#    test_eigen_param()
+#
 #    test_per_param()
 #
 #    test_perf_param()
@@ -544,12 +600,12 @@ if __name__ == '__main__':
 #    for k,v in AA.iteritems():
 #        print v.shape
 #        AAA[k] = v[-1, :]
-
+#
 #    test_response_noise_param()
-
+#
 #    test_noise_tot_param()
-
-    fa, na = test_nep_ref_param()
+#
+#    fa, na = test_nep_ref_param()
 
     print 'Done.'
 

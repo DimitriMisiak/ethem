@@ -145,27 +145,33 @@ fi_freq_psd, fi_pulse_psd = eth.psd(fi_pulse_fft, fs)
 #==============================================================================
 # TEMPORAL DIAGONALIZATION
 #==============================================================================
-coup_mat = eth.System.coupling_matrix
-coup_mat_num = coup_mat.subs(edict)
-coup_mat_eval = np.array(coup_mat_num).astype('float64')
-
-#eigen-values and vectors
-eig, proj = LA.eig(coup_mat_eval)
-tau_coup = 1.0/np.real(eig)
-
-proj_inv = LA.inv(proj)
-
-import sympy as sy
-per_td = (eth.System.capacity_matrix)**-1 * sy.Matrix(per.fraction)
-
-phi_amp = [float((f*per.energy).subs(edict)) for f in per_td]
-eig_amp = proj_inv.dot(phi_amp)
-
+#coup_mat = eth.System.coupling_matrix
+#coup_mat_num = coup_mat.subs(edict)
+#coup_mat_eval = np.array(coup_mat_num).astype('float64')
+#
+##eigen-values and vectors
+#eig, proj = LA.eig(coup_mat_eval)
+#tau_coup = 1.0/np.real(eig)
+#
+#proj_inv = LA.inv(proj)
+#
+#import sympy as sy
+#per_td = (eth.System.capacity_matrix)**-1 * sy.Matrix(per.fraction)
+#
+#phi_amp = [float((f*per.energy).subs(edict)) for f in per_td]
+#eig_amp = proj_inv.dot(phi_amp)
+#
 td_time_array = np.arange(0, L, fs**-1)
+#
+#eig_vec = [a*np.exp(-td_time_array/tau) for a,tau in zip(eig_amp, tau_coup)]
+##exp_vec = map(lambda x,y: y*np.exp(-t/x), tau, A)
+#td_pulse_array = proj.dot(eig_vec)
+#
+## pulse amplitude
+#td_amp = max(abs(td_pulse_array[-1]))
 
-eig_vec = [a*np.exp(-td_time_array/tau) for a,tau in zip(eig_amp, tau_coup)]
-#exp_vec = map(lambda x,y: y*np.exp(-t/x), tau, A)
-td_pulse_array = proj.dot(eig_vec)
+tau_coup, amp_coup, pulse_fun = eth.eigen_fun(edict)
+td_pulse_array = pulse_fun(td_time_array)
 
 # pulse amplitude
 td_amp = max(abs(td_pulse_array[-1]))

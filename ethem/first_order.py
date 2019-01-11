@@ -105,6 +105,101 @@ def impedance_matrix_param(param, eval_dict, auto_ss=True):
     return impedance_matrix_fun
 
 
+def eigen_fun(eval_dict):
+    """ Diagonalize of the coupling matrix and return the amplitude and the
+    time constants for the temporal pulses.
+    Assuming a Dirac power injection to start with.
+
+    See also
+    ========
+
+    """
+    coup_mat = System.coupling_matrix
+    coup_mat_num = coup_mat.subs(eval_dict)
+    coup_mat_eval = np.array(coup_mat_num).astype('float64')
+
+    #eigen-values and vectors
+    eig, proj = np.linalg.eig(coup_mat_eval)
+    tau_coup = 1.0/np.real(eig)
+
+    proj_inv = np.linalg.inv(proj)
+
+    import sympy as sy
+    per = System.perturbation
+    per_td = (System.capacity_matrix)**-1 * sy.Matrix(per.fraction)
+
+    phi_amp = [float((f*per.energy).subs(eval_dict)) for f in per_td]
+    eig_amp = proj_inv.dot(phi_amp)
+
+    def pulse_fun(time_array):
+
+        eig_vec = [a*np.exp(-time_array/tau) for a,tau in zip(eig_amp, tau_coup)]
+        pulse_array = proj.dot(eig_vec)
+
+        return pulse_array
+
+    return tau_coup, eig_amp, pulse_fun
+
+
+def eigen_param(param, eval_dict, auto_ss=True):
+
+    npar = len(param)
+
+    char_dict = eval_dict.copy()
+
+    for p in param:
+        try:
+            char_dict.pop(p)
+        except:
+            pass
+
+    coup_mat = System.coupling_matrix
+    coup_mat_num = coup_mat.subs(char_dict)
+
+    per = System.perturbation
+    per_matrix = (System.capacity_matrix)**-1 * sy.Matrix(per.fraction) * per.energy
+    per_num = per_matrix.subs(char_dict)
+
+    phi = tuple(System.phi_vect)
+
+    coup_mat_simple = sy.lambdify(phi+param, coup_mat_num, modules="numpy")
+    per_simple = sy.lambdify(phi+param, per_num, modules="numpy")
+
+    if auto_ss:
+        ss_fun = solve_sse_param(param, eval_dict)
+
+    def eigen_fun(p, sol_ss=[]):
+        assert len(p) == npar
+
+        if auto_ss:
+            sol_ss = ss_fun(p).x
+        else:
+            assert len(sol_ss) == len(phi)
+
+        args = tuple(sol_ss) + tuple(p)
+        coup_mat_eval = coup_mat_simple(*args)
+        per_eval = per_simple(*args)
+
+        #eigen-values and vectors
+        eig, proj = np.linalg.eig(coup_mat_eval)
+        tau_array = 1.0/np.real(eig)
+
+        proj_inv = np.linalg.inv(proj)
+
+        amp_array = proj_inv.dot(per_eval)
+
+        def pulse_fun(time_array):
+
+            eig_vec = [a*np.exp(-time_array/tau) for a,tau in zip(amp_array, tau_array)]
+            pulse_array = proj.dot(eig_vec)
+
+            return pulse_array
+
+        return tau_array, amp_array, pulse_fun
+
+    return eigen_fun
+
+
 def per_fft(per):
     """ Return the symbolic expression of the fourier transform of the event
     perturbation.
