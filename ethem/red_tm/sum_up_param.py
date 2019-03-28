@@ -26,7 +26,7 @@ plt.close('all')
 # PARAMETERS
 #==============================================================================
 L = 1
-fs = 1e3
+fs = 1e4
 
 #%%
 #==============================================================================
@@ -555,13 +555,16 @@ def test_nep_ref_param():
         )
 
         nep_param = eth.nep_ref_param(param_sym, evad, ref_bath)
+        res_param = eth.res_ref_param(param_sym, evad, ref_bath, fs, L)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
             nfun = nep_param((p,))
             nep_array = nfun(freq_array)
 
-            res = eth.nep_to_res(freq_array, nep_array)
+#            res = eth.nep_to_res(freq_array, nep_array)
+            res = res_param((p,))
+
             res_ev = res * config.energy.subs(evad) / 1.6e-19
             ax.loglog(freq_array, nep_array, label='{0:.4f}, {1:.3f} eV'.format(p, res_ev))
 
@@ -605,7 +608,7 @@ if __name__ == '__main__':
 #
 #    test_noise_tot_param()
 #
-#    fa, na = test_nep_ref_param()
+    fa, na = test_nep_ref_param()
 
     print 'Done.'
 

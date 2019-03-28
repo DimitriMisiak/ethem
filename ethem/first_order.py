@@ -924,13 +924,15 @@ def res_ref(per, eval_dict, fs, L, ref_bath, flim):
     return res
 
 
-def res_ref_param(param, eval_dict, fs, L, ref_bath, flim):
+def res_ref_param(param, eval_dict, ref_bath, fs, L, flim=None):
 
-    freq_array, nep_array_fun = nep_ref_param(param, eval_dict, fs, L, ref_bath)
+    freq_array = np.flip(np.arange(fs/2., 0, -L**-1), axis=0)
+
+    nep_array_fun = nep_ref_param(param, eval_dict, ref_bath)
 
     def res_ref_fun(p):
-        nep_array = nep_array_fun(p)
-        res = nep_to_res(freq_array, nep_array, flim)
+        nep_array = nep_array_fun(p)(freq_array)
+        res = nep_to_res(freq_array, nep_array, flim=flim)
         return res
 
     return res_ref_fun
