@@ -1,0 +1,34 @@
+
+build_phi_vect :
+
+[V_f]
+
+build_capacity_matrix :
+
+[C_f]
+
+build_steady_state_eq :
+
+[-V_f ]
+[-----]
+[R_ntd]
+
+build_eletro_thermal_eq :
+
+[  -V_f   ]
+[---------]
+[C_f*R_ntd]
+
+build_coupling_matrix :
+
+[    1    ]
+[---------]
+[C_f*R_ntd]
+
+build_admittance_mat :
+
+[    /               1    \]
+[C_f*|2*I*pi*f + ---------|]
+[    \           C_f*R_ntd/]
+
+ END OF PPRINT.

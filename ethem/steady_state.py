@@ -211,7 +211,7 @@ def solve_sse_param(param, eval_dict):
             assert len(phi0) == nphi, "Invalid initial vector size."
 
         def aux(phi):
-            args = tuple(phi) + x
+            args = tuple(phi) + tuple(x)
             return eteq_lambda(*args)
 
         sol = solve_sse_perf(aux, phi0)

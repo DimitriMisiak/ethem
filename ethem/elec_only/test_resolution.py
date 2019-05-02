@@ -17,8 +17,8 @@ from os.path import dirname, abspath
 
 import ethem as eth
 
-import config_red_tm as config
-from config_red_tm import evad
+import config_red_toy as config
+from config_red_toy import evad
 
 plt.close('all')
 
@@ -583,7 +583,7 @@ def test_nep_ref_param():
 #%%
 if __name__ == '__main__':
 
-#    test_solve_sse_param()
+    test_solve_sse_param()
 #
 #    test_impedance_matrix_param()
 #
@@ -608,7 +608,7 @@ if __name__ == '__main__':
 #
 #    test_noise_tot_param()
 #
-    fa, na = test_nep_ref_param()
+#    fa, na = test_nep_ref_param()
 
     print 'Done.'
 

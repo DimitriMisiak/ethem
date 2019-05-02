@@ -17,7 +17,7 @@ from os.path import dirname, abspath
 
 import ethem as eth
 
-from config_red_tm import evad
+from config_red_toy import evad
 
 plt.close('all')
 
@@ -233,7 +233,7 @@ for i in range(num):
         td_line, = ax[i,j].plot(fi_time_array, td_pulse_array[i],
                      label='Temporal Diagonalization \n {:.2e} V/keV'.format(td_amp))
         ax[i,j].grid(True)
-    #    ax[i,0].legend(title=pulse_welchtau_msg)
+    #    ax[i,0].legend(title=tau_msg)
         ax[i,j].set_xlabel('Time [s]')
         ax[i,j].set_ylabel(lab[i])
 
@@ -339,8 +339,7 @@ obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.iteritems()}
 full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
 
 #nep_array = full_array / fi_pulse_psd[ref_ind]
-nep_array = full_array / td_pulse_psd[ref_ind]
-nep_freq_array, nep_array_ = eth.nep_ref(per.matrix, edict, fs, L, ref_bath) #!!!
+nep_freq_array, nep_array = eth.nep_ref(per.matrix, edict, fs, L, ref_bath)
 
 ref_pulse_ft = eth.response_event_ft(per.matrix, edict)(nep_freq_array)[ref_ind]
 ref_sensitivity = np.abs(ref_pulse_ft)**2
@@ -375,9 +374,8 @@ sup_index = min(np.where(fi_freq_psd>=sup)[0])
 invres_trapz = invres_array[inf_index:sup_index]
 freq_trapz = fi_freq_psd[inf_index:sup_index]
 
-invres_int = np.trapz(invres_trapz, freq_trapz)
-res = (invres_int)**-0.5
-print 'RES = ', res, ' keV GG wp'
+#invres_int = np.trapz(invres_trapz, freq_trapz)
+#res = (invres_int)**-0.5
 
 #res = eth.nep_to_res(nep_freq_array, nep_array, (inf, sup))
 res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
