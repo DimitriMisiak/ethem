@@ -28,16 +28,16 @@ def psd(fft, fs, weight=None):
 
     Returns
     =======
-    freq : nd.array
+    freq : numpy.ndarray
         Frequency array containing only the positive frequencies (no 0th freq).
-    psd : nd.array
+    psd : numpy.ndarray
         PSD array.
     """
-    nfft = fft.shape[0]
+    nfft = fft.shape[-1]
     if weight == None:
         s1 = nfft
         s2 = nfft
-    else :
+    else:
         s1 = np.sum(weight)
         s2 = np.sum(np.array(weight)**2)
 
@@ -72,3 +72,39 @@ def psd(fft, fs, weight=None):
 
     return freq, psd_array
 
+
+def temp_to_fft(time_array):
+    """ Pass the temporal pulse into the Fourier space.
+
+    Parameters
+    ==========
+    time_array : array_like
+        Time array in seconds.
+    pulse_array : array_like
+        Pulse array, can be 1d or 2d.
+
+    Return
+    ======
+    freq_fft : ndarray
+        Frequency array formatted according to the numpy default DFT sample
+        frequencies ( [0,1,...,n/2-1, -n/2, ..., -1] ). Might need to use
+        the numpy.fft.fftshift to make pretty plots.
+    pulse_fft : 1d,2d ndarray
+        Pulse array formatted as freq_fft.
+
+    See also
+    ========
+    numpy.fft.fftshift
+
+    """
+    # sampling space
+    dt = time_array[1] - time_array[0]
+    # sampling frequency
+    fs = dt**-1
+    # window length
+    twin = time_array[-1] - time_array[0] + dt
+
+    freq_fft = np.fft.fftfreq(int(twin*fs), fs**-1)
+#    pulse_fft = np.fft.fft(pulse_array)
+
+    return freq_fft

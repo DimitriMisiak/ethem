@@ -1,0 +1,96 @@
+
+build_phi_vect :
+
+[T_abso]
+[      ]
+[T_nbsi]
+
+build_capacity_matrix :
+
+[          3                                    ]
+[M_a*T_abso *cp_Ge                              ]
+[-----------------               0              ]
+[       D_Ge                                    ]
+[                                               ]
+[        0          H_nbsi*L_nbsi*W_nbsi*ce_nbsi]
+
+build_steady_state_eq :
+
+[                            /      n_ep         n_ep\             /        n_Au      n_Au\]
+[- H_nbsi*L_nbsi*W_nbsi*g_ep*\T_abso     - T_nbsi    / + S_Au*g_Au*\- T_abso     + T_b    /]
+[                                                                                          ]
+[                                                                            2             ]
+[                          /      n_ep         n_ep\            L_nbsi*i_bias *rho         ]
+[H_nbsi*L_nbsi*W_nbsi*g_ep*\T_abso     - T_nbsi    / + ------------------------------------]
+[                                                                    /     -(T_nbsi - Tc) \]
+[                                                                    |     ---------------|]
+[                                                                    |           sig      |]
+[                                                      H_nbsi*W_nbsi*\1 + e               /]
+
+build_eletro_thermal_eq :
+
+[     /                            /      n_ep         n_ep\             /        n_Au      n_Au\\]
+[D_Ge*\- H_nbsi*L_nbsi*W_nbsi*g_ep*\T_abso     - T_nbsi    / + S_Au*g_Au*\- T_abso     + T_b    //]
+[-------------------------------------------------------------------------------------------------]
+[                                                  3                                              ]
+[                                        M_a*T_abso *cp_Ge                                        ]
+[                                                                                                 ]
+[                                                                               2                 ]
+[                             /      n_ep         n_ep\            L_nbsi*i_bias *rho             ]
+[   H_nbsi*L_nbsi*W_nbsi*g_ep*\T_abso     - T_nbsi    / + ------------------------------------    ]
+[                                                                       /     -(T_nbsi - Tc) \    ]
+[                                                                       |     ---------------|    ]
+[                                                                       |           sig      |    ]
+[                                                         H_nbsi*W_nbsi*\1 + e               /    ]
+[   ------------------------------------------------------------------------------------------    ]
+[                                  H_nbsi*L_nbsi*W_nbsi*ce_nbsi                                   ]
+
+build_coupling_matrix :
+
+[      /                      n_ep                               n_Au          \                                                                                              ]
+[      |  H_nbsi*L_nbsi*T_abso    *W_nbsi*g_ep*n_ep   S_Au*T_abso    *g_Au*n_Au|                                                                                              ]
+[-D_Ge*|- ----------------------------------------- - -------------------------|                                                  n_ep                                        ]
+[      \                    T_abso                              T_abso         /                        -D_Ge*H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep                       ]
+[--------------------------------------------------------------------------------                       ------------------------------------------------                      ]
+[                                         3                                                                                   3                                               ]
+[                               M_a*T_abso *cp_Ge                                                                   M_a*T_abso *T_nbsi*cp_Ge                                  ]
+[                                                                                                                                                                             ]
+[                                                                                   /                                                                     -(T_nbsi - Tc)    \ ]
+[                                                                                   |                                                                     ---------------   | ]
+[                                                                                   |                      n_ep                                    2            sig         | ]
+[                                                                                   |  H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep      L_nbsi*i_bias *rho*e                  | ]
+[                                                                                  -|- ----------------------------------------- + -----------------------------------------| ]
+[                                                                                   |                    T_nbsi                                                            2| ]
+[                                                                                   |                                                                /     -(T_nbsi - Tc) \ | ]
+[                                                                                   |                                                                |     ---------------| | ]
+[                                    n_ep                                           |                                                                |           sig      | | ]
+[                             -T_abso    *g_ep*n_ep                                 \                                              H_nbsi*W_nbsi*sig*\1 + e               / / ]
+[                             ----------------------                               -------------------------------------------------------------------------------------------]
+[                                 T_abso*ce_nbsi                                                                   H_nbsi*L_nbsi*W_nbsi*ce_nbsi                               ]
+
+build_admittance_mat :
+
+[                  /       /                      n_ep                               n_Au          \           \                                                                                                                                   ]
+[                  |       |  H_nbsi*L_nbsi*T_abso    *W_nbsi*g_ep*n_ep   S_Au*T_abso    *g_Au*n_Au|           |                                                                                                                                   ]
+[                  |  D_Ge*|- ----------------------------------------- - -------------------------|           |                                                                                                                                   ]
+[          3       |       \                    T_abso                              T_abso         /           |                                                                                                                                   ]
+[M_a*T_abso *cp_Ge*|- ------------------------------------------------------------------------------ + 2*I*pi*f|                                                                                                                                   ]
+[                  |                                          3                                                |                                                                  n_ep                                                             ]
+[                  \                                M_a*T_abso *cp_Ge                                          /                                             -H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep                                            ]
+[---------------------------------------------------------------------------------------------------------------                                             -------------------------------------------                                           ]
+[                                                      D_Ge                                                                                                                     T_nbsi                                                             ]
+[                                                                                                                                                                                                                                                  ]
+[                                                                                                                                              /                                                                                -(T_nbsi - Tc)    \]
+[                                                                                                                                              |                                                                                ---------------   |]
+[                                                                                                                                              |                                 n_ep                                    2            sig         |]
+[                                                                                                                                              |             H_nbsi*L_nbsi*T_nbsi    *W_nbsi*g_ep*n_ep      L_nbsi*i_bias *rho*e                  |]
+[                                                                                                                                              |           - ----------------------------------------- + -----------------------------------------|]
+[                                                                                                                                              |                               T_nbsi                                                            2|]
+[                                                                                                                                              |                                                                           /     -(T_nbsi - Tc) \ |]
+[                                                                                                                                              |                                                                           |     ---------------| |]
+[                                                       n_ep                                                                                   |                                                                           |           sig      | |]
+[                                  -H_nbsi*L_nbsi*T_abso    *W_nbsi*g_ep*n_ep                                                                  |                                                         H_nbsi*W_nbsi*sig*\1 + e               / |]
+[                                  -------------------------------------------                                    H_nbsi*L_nbsi*W_nbsi*ce_nbsi*|2*I*pi*f - ---------------------------------------------------------------------------------------|]
+[                                                     T_abso                                                                                   \                                         H_nbsi*L_nbsi*W_nbsi*ce_nbsi                             /]
+
+ END OF PPRINT.

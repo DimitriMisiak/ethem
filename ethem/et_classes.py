@@ -15,6 +15,7 @@ import sys
 import os
 
 from .core_classes import System, Element, Bath, RealBath, Link
+from .thermal import event_power
 
 
 class Thermostat(Bath):
@@ -111,6 +112,11 @@ class ThermalLink(Link):
         # default choice for the conductance
         return (self.power).diff(self.from_bath.temperature)
 
+    @property
+    def temperature_diff(self):
+#        return self.from_bath.temperature - self.to_bath.temperature
+        return self.main_quant_diff
+
 
 class Resistor(Link):
     """ Link subclass defining an electric link characterized by
@@ -131,10 +137,48 @@ class Resistor(Link):
         self.temperature = sy.symbols('T_R_' + self.label)
 
     @property
+    def voltage(self):
+        return self.main_quant_diff
+
+    @property
     def current(self):
-        return self.resistivity**-1 * (self.from_bath.voltage
-                                       - self.to_bath.voltage)
+        return self.resistivity**-1 * self.voltage
 
     @property
     def main_flux(self):
         return self.current
+
+
+class Perturbation(object):
+    """ Perturbation class.
+
+    Parameters
+    ----------
+    energy : sympy.symbols
+        Energy symbol.
+    Fraction : list
+        List of the fraction of the energy going in each bath. Its length
+        must match the number of bath in the system.
+    tau_therm : list
+        List of the thermalization time in each bath. Its length must match
+        the number of bath in the system.
+    """
+    def __init__(self, energy, fraction, tau_therm):
+
+        bath_list = System.bath_list
+        num = len(bath_list)
+
+        assert len(fraction) == num
+        assert len(tau_therm) == num
+
+        per = sy.zeros(len(bath_list), 1)
+
+        for i in range(num):
+            per[i] = fraction[i] * event_power(energy, tau_therm[i], System.time)
+
+        self.matrix = per
+        self.energy = energy
+        self. fraction = fraction
+        self.tau_therm = tau_therm
+
+        System.perturbation = self

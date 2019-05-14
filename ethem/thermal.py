@@ -74,6 +74,23 @@ def ntd_char(R0, T0, T):
     return R0 * sy.exp((T0/T)**0.5)
 
 
+def nbsi_char(Rn, Tc, sig, T):
+    """ Early approximation of the NbSi supraconductor characteristic.
+
+    Parameters
+    ==========
+    Rn : normal resistance at high temperature
+
+    Tc : supraconductor transistion temperature
+
+    sig : width of the transition
+
+    T : nbsi temperature
+
+    """
+    return Rn / ( 1 + sy.exp( -(T-Tc)/sig ) )
+
+
 def joule_power(V, R):
     """ Joule power in resistance calculated from its voltage and resistance.
 

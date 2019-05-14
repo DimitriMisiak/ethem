@@ -11,7 +11,7 @@ import Image
 
 from .core_classes import System, Bath, Link
 
-def display_scheme(fp='scheme.png'):
+def sys_scheme(fp='scheme.png', display=True):
     """ Create and display the symbolic scheme of the System.
 
     Parameters
@@ -46,9 +46,11 @@ def display_scheme(fp='scheme.png'):
         edge_l.set_label(lab)
         graph.add_edge(edge_l)
 
-    try:
-        graph.write_png(fp)
-        image = Image.open(fp)
-        image.show()
-    except IOError as err:
-        print 'Cannot display scheme. IOError: {}'.format(err)
+    graph.write_png(fp)
+
+    if display:
+        try:
+            image = Image.open(fp)
+            image.show()
+        except IOError as err:
+            print 'Cannot display scheme. IOError: {}'.format(err)
