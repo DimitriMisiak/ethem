@@ -4,4 +4,4 @@
 .spyproject/
 
 # ignoring the results produced by the tests
-*/results/
+*/output/
