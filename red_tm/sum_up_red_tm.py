@@ -246,8 +246,8 @@ fig.legend(handles, labels, title=tau_msg, loc='right')
 #fig.tight_layout(rect=(0.,0.,1.,1.))
 #fig.show()
 
-print 'Amplitudes : ', ni_amp, fi_amp, td_amp
-print tau_msg
+print('Amplitudes : ', ni_amp, fi_amp, td_amp)
+print(tau_msg)
 
 #==============================================================================
 # FFT PLOT
@@ -315,7 +315,7 @@ fig.legend(handles, labels, loc='right', title=f0_msg)
 fig.tight_layout(rect=(0.,0.,0.7,1.))
 fig.show()
 
-print 'PSD LEvel : ', ni_level, fi_level, td_level, welch_level
+print('PSD LEvel : ', ni_level, fi_level, td_level, welch_level)
 
 #==============================================================================
 # NOISE RESPONSE
@@ -331,10 +331,10 @@ ref_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
 ref_freq_psd, ref_pulse_psd = eth.psd(ref_pulse_fft, fs)
 
 psd_fun_dict = eth.response_noise(edict)
-psd_eval_dict = {k:v(ref_freq_psd) for k,v in psd_fun_dict.iteritems()}
+psd_eval_dict = {k:v(ref_freq_psd) for k,v in psd_fun_dict.items()}
 
 obs_fun_dict = eth.measure_noise(ref_bath, edict)
-obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.iteritems()}
+obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.items()}
 
 full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
 
@@ -377,7 +377,7 @@ freq_trapz = fi_freq_psd[inf_index:sup_index]
 
 invres_int = np.trapz(invres_trapz, freq_trapz)
 res = (invres_int)**-0.5
-print 'RES = ', res, ' keV GG wp'
+print('RES = ', res, ' keV GG wp')
 
 #res = eth.nep_to_res(nep_freq_array, nep_array, (inf, sup))
 res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
@@ -385,14 +385,14 @@ res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
 res_msg = 'Resolution : {:.0f} eV'.format(
         res * per.energy.subs(edict) / (1.6e-19)
 )
-print res_msg
+print(res_msg)
 
 ref_10_ind = np.where(ref_freq_psd==10)[0][0]
 signal_level = ref_pulse_psd[-1, ref_10_ind]
 noise_level = full_array[ref_10_ind]
 
-print 'Signal Level =', signal_level
-print 'Noise_Level =', noise_level
+print('Signal Level =', signal_level)
+print('Noise_Level =', noise_level)
 #==============================================================================
 # NOISE PSD PLOT
 #==============================================================================
@@ -400,12 +400,12 @@ fig, ax = plt.subplots(nrows=num, num='NOISE PSD PLOT', figsize=(9,9))
 
 for i in range(num):
 
-    for k,v in psd_eval_dict.iteritems():
+    for k,v in psd_eval_dict.items():
         ax[i].plot(fi_freq_psd, v[i], label=k)
 
     if i == ref_ind:
 
-        for k,v in obs_eval_dict.iteritems():
+        for k,v in obs_eval_dict.items():
             ax[i].plot(fi_freq_psd, v, label=k)
 
         ax[i].plot(fi_freq_psd, full_array, label='full', color='k', lw=2.)
@@ -437,10 +437,10 @@ ax_ref[0].plot(ref_freq_psd, ref_sensitivity, label='1keV pulse',
 ax_ref[0].plot(ref_freq_psd, exp_sensitivity, label='exp. 1keV pulse',
       color='k', lw=5.)
 
-for k,v in psd_eval_dict.iteritems():
+for k,v in psd_eval_dict.items():
     ax_ref[0].plot(fi_freq_psd, v[ref_ind], label=k)
 
-for k,v in obs_eval_dict.iteritems():
+for k,v in obs_eval_dict.items():
     ax_ref[0].plot(fi_freq_psd, v, label=k)
 ax_ref[0].plot(fi_freq_psd, full_array, label='Tot Noise', color='red', lw=5.)
 

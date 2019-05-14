@@ -10,6 +10,7 @@ Functions to resolve the temporal response of the system with
 import numpy as np
 import sympy as sy
 from scipy.integrate import odeint, solve_ivp
+
 from .core_classes import System
 
 
@@ -68,6 +69,8 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
 
     sol = odeint(funky, x0, trange,
                  rtol=1e-15, atol=1e-15, hmax=fs**-1)
+
+    print(sol)
 
     # substracting the initial vector
     sol_per = sol-x0

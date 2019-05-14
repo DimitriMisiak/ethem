@@ -32,7 +32,7 @@ def noise_flux_vects():
     for b in bath_list:
         noi_dict = b.noise_sys
 
-        for key, noi in noi_dict.iteritems():
+        for key, noi in noi_dict.items():
             if noi != 0:
                 vec = sy.zeros(num, 1)
 
@@ -51,7 +51,7 @@ def noise_flux_vects():
     for s in source:
         noi_dict = s.noise_flux
 
-        for key, noi in noi_dict.iteritems():
+        for key, noi in noi_dict.items():
             if noi != 0:
                 vec = sy.zeros(num, 1)
 
@@ -103,7 +103,7 @@ def noise_flux_fun(eval_dict):
 
         return noise_fun_array
 
-    for key, noise in noise_dict.iteritems():
+    for key, noise in noise_dict.items():
 
         fun_dict[key] = fun_maker(noise)
 
@@ -132,7 +132,7 @@ def noise_flux_fun_param(param, eval_dict, auto_ss=True):
         ss_fun = solve_sse_param(param, eval_dict)
 
     noise_dict_simple = dict()
-    for key, noi in noise_dict.iteritems():
+    for key, noi in noise_dict.items():
 
         # FIXING SYMPY LAMBDIFY BROADCASTING
         noi[0] += 1e-40 * System.freq
@@ -158,7 +158,7 @@ def noise_flux_fun_param(param, eval_dict, auto_ss=True):
             return nfun_array
 
         noise_flux_dict = dict()
-        for key, nfun in noise_dict_simple.iteritems():
+        for key, nfun in noise_dict_simple.items():
 
             noise_flux_dict[key] = array_maker(nfun)
 
@@ -199,7 +199,7 @@ def noise_obs_fun(ref_bath, eval_dict):
 
         return noise_fun_array
 
-    for key, noise in noise_dict.iteritems():
+    for key, noise in noise_dict.items():
 
         fun_dict[key] = fun_maker(noise)
 
@@ -228,7 +228,7 @@ def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
         ss_fun = solve_sse_param(param, eval_dict)
 
     noise_dict_simple = dict()
-    for key, noi in noise_dict.iteritems():
+    for key, noi in noise_dict.items():
 
         noise_num = noi.subs(char_dict)
         noise_fun_simple = sy.lambdify(args_lambda, noise_num, modules="numpy")
@@ -251,7 +251,7 @@ def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
             return nfun_array
 
         noise_obs_dict = dict()
-        for key, nfun in noise_dict_simple.iteritems():
+        for key, nfun in noise_dict_simple.items():
 
             noise_obs_dict[key] = array_maker(nfun)
 

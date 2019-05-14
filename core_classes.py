@@ -12,7 +12,6 @@ electro-thermal scheme.
 import sympy as sy
 import abc
 import sys
-import os
 
 class System(object):
     """ Un-instanced class representing the system environment in which the
@@ -30,7 +29,7 @@ class System(object):
         """ Fast checking the elements of the system by printing theier label.
         """
         for e in cls.elements_list:
-            print 'The label of this bath is ', e.label
+            print('The label of this bath is ', e.label)
 
     @classmethod
     def subclass_list(cls, subcls):
@@ -115,7 +114,10 @@ class System(object):
 
             coup_list.append(coup)
 
-        M = reduce(lambda x,y: x.col_join(y), coup_list)
+        # M = reduce(lambda x,y: x.col_join(y), coup_list)
+        M = coup_list[0]
+        for vect in coup_list[1:]:
+            M = M.col_join(vect)
 
         ### minus sign to obtain the coupling matrix as :
         ### dPhi/dt = - M * Phi
@@ -152,7 +154,7 @@ class System(object):
 
         # printing the name of the method and pprint the symbolic expression.
         def pprint(method):
-            print '\n{} :\n'.format(method.__name__)
+            print('\n{} :\n'.format(method.__name__))
             sy.pprint(method(), wrap_line=False, use_unicode=False)
 
 
@@ -180,12 +182,12 @@ class System(object):
             pprint(System.build_admittance_mat)
 
             # String to conclude the txt file, and assure a good pprint.
-            print '\n END OF PPRINT.'
+            print('\n END OF PPRINT.')
 
             # reverting to the original printing backend
             sys.stdout = original_stdout
             # for the user
-            print 'Building System Done (written in {})'.format(savepath)
+            print('Building System Done (written in {})'.format(savepath))
 
         finally:
             # even if an error occur, the priting backend is reverted to

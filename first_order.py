@@ -553,7 +553,7 @@ def response_noise(eval_dict):
 
         return psd_fun
 
-    for key, noise_fun in noise_fun_dict.iteritems():
+    for key, noise_fun in noise_fun_dict.items():
 
         psd_fun_dict[key] = psd_fun_maker(noise_fun)
 
@@ -588,7 +588,7 @@ def response_noise_param(param, eval_dict):
             return psd_fun
 
         psd_fun_dict = dict()
-        for key, noise_fun in noise_fun_dict.iteritems():
+        for key, noise_fun in noise_fun_dict.items():
 
             psd_fun_dict[key] = psd_fun_maker(noise_fun)
 
@@ -622,7 +622,7 @@ def response_noise_ref(eval_dict, ref_bath):
 
         return ref_fun
 
-    for key,nfun in noise_dict.iteritems():
+    for key,nfun in noise_dict.items():
 
         noise_ref_dict[key] = ref_fun_maker(nfun)
 
@@ -665,7 +665,7 @@ def measure_noise(ref_bath, eval_dict):
 
         return psd_fun
 
-    for key, noise_fun in noise_fun_dict.iteritems():
+    for key, noise_fun in noise_fun_dict.items():
 
         psd_fun_dict[key] = psd_fun_maker(noise_fun)
 
@@ -694,7 +694,7 @@ def measure_noise_param(param, eval_dict, ref_bath):
             return psd_fun
 
         psd_fun_dict = dict()
-        for key, noise_fun in noise_fun_dict.iteritems():
+        for key, noise_fun in noise_fun_dict.items():
 
             psd_fun_dict[key] = psd_fun_maker(noise_fun)
 
@@ -727,12 +727,12 @@ def noise_tot_fun(ref_bath, eval_dict):
 
     def noise_fun(frange):
 
-        sys_eval_dict = {k:v(frange) for k,v in sys_dict.iteritems()}
-        obs_eval_dict = {k:v(frange) for k,v in obs_dict.iteritems()}
+        sys_eval_dict = {k:v(frange) for k,v in sys_dict.items()}
+        obs_eval_dict = {k:v(frange) for k,v in obs_dict.items()}
 
         full_array = (
-            np.sum(obs_eval_dict.values(), axis=0)
-            + np.sum(sys_eval_dict.values(), axis=0)[ref_ind]
+            np.sum(list(obs_eval_dict.values()), axis=0)
+            + np.sum(list(sys_eval_dict.values()), axis=0)[ref_ind]
         )
 
         return full_array
@@ -754,12 +754,12 @@ def noise_tot_param(param, eval_dict, ref_bath):
 
         def noise_fun(frange):
 
-            sys_eval_dict = {k:v(frange) for k,v in sys_dict.iteritems()}
-            obs_eval_dict = {k:v(frange) for k,v in obs_dict.iteritems()}
+            sys_eval_dict = {k:v(frange) for k,v in sys_dict.items()}
+            obs_eval_dict = {k:v(frange) for k,v in obs_dict.items()}
 
             full_array = (
-                np.sum(obs_eval_dict.values(), axis=0)
-                + np.sum(sys_eval_dict.values(), axis=0)[ref_ind]
+                np.sum(list(obs_eval_dict.values()), axis=0)
+                + np.sum(list(sys_eval_dict.values()), axis=0)[ref_ind]
             )
 
             return full_array

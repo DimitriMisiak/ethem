@@ -81,7 +81,7 @@ eth.System.build_sym()
 #==============================================================================
 # EVENT PERTURBATION
 #==============================================================================
-energy, tau_therm, t0 = sy.symbols('E, tau_th, t0')
+energy, tau_therm, t0 = sy.symbols('E, tau_th, t0', positive=True)
 per = sy.zeros(len(eth.System.bath_list), 1)
 per[0] = eth.event_power(energy, tau_therm, time)
 

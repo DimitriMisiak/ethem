@@ -10,11 +10,8 @@ electro-thermal scheme.
 """
 
 import sympy as sy
-import abc
-import sys
-import os
 
-from .core_classes import System, Element, Bath, RealBath, Link
+from .core_classes import System, Bath, RealBath, Link
 from .thermal import event_power
 
 

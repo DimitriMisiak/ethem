@@ -11,6 +11,7 @@ import numpy as np
 import sympy as sy
 from scipy.optimize import root
 from scipy.integrate import odeint
+
 from .core_classes import System
 from .et_classes import ThermalBath, Thermostat, Capacitor
 
@@ -351,7 +352,7 @@ def solve_sse_old(eval_dict, x0, method=None, printsuccess=False):
                options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
 
     if printsuccess == True:
-        print sol.success
+        print(sol.success)
 
     return sol.x
 
@@ -382,6 +383,6 @@ def solve_sse_manual(funk, x0, twin=10., method=None, printsuccess=False,
                options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
 
     if printsuccess == True:
-        print sol.success
+        print(sol.success)
 
     return sol.x

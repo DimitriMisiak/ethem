@@ -20,8 +20,7 @@ stroke = [pe.Stroke(linewidth=2., foreground='k'),
 stroke_anti = [pe.Stroke(linewidth=2., foreground='white'),
              pe.Normal()]
 
-
-import ethem as eth
+#import ethem as eth
 
 plt.close('all')
 

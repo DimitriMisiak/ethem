@@ -57,7 +57,7 @@ time_array = np.linspace(0., 10., 100)
 eteq_aux = lambda y,t: eteq_fun(*y)
 eteq_aux_root = lambda y: eteq_fun(*y)
 
-for i in xrange(100):
+for i in range(100):
     t0 = np.random.uniform(0.010, 0.030)
     inte = odeint(eteq_aux, [t0], time_array)
 
@@ -71,7 +71,7 @@ for i in xrange(100):
 
     sol = root(eteq_aux_root, t_conv)
     if not sol.success:
-        print sol.success
+        print(sol.success)
 
     plt.figure('check steady-state odeint')
     plt.scatter(sol.x, 0., marker='*', color='red')

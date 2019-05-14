@@ -31,7 +31,7 @@ import numpy as np
 import scipy.signal as sgl
 import scipy.linalg as LA
 
-from config_nbsi_solo import evad, nbsi, cryo, per, time, freq
+from config_nbsi_solo import evad, nbsi, cryo, per, time, freq, energy
 
 plt.close('all')
 
@@ -210,14 +210,15 @@ phi_array = per_arg_fun(time_array)
 
 #phi0 = np.array([(1-eps)*E/s['Ca'], 0, eps*E/s['Ce'], 0])  #perturbation
 
-phi0 = sy.Matrix([[sy.symbols('E')/nbsi.th_capacity]]).subs(edict)
+phi0 = sy.Matrix([[energy/nbsi.th_capacity]]).subs(edict)
 phi0 = np.array(phi0).astype(np.float64)
 
 A = P_1.dot(phi0)
 tau = 1.0/eig
 
 #sol.in eigenvector basis
-exp_vec = map(lambda x,y: y*np.exp(-time_array/x), tau, A)
+#exp_vec = map(lambda x,y: y*np.exp(-time_array/x), tau, A)
+exp_vec = [a*np.exp(-time_array/t) for a,t in zip(tau, A)]
 pulse_array = P.dot(exp_vec)[0]
 
 ### CONVOLUTION WITH EVENT SHAPE

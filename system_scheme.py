@@ -7,7 +7,7 @@ scheme of the electro-thermal system.
 """
 
 import pydot
-import Image
+from PIL import Image
 
 from .core_classes import System, Bath, Link
 
@@ -53,4 +53,4 @@ def sys_scheme(fp='scheme.png', display=True):
             image = Image.open(fp)
             image.show()
         except IOError as err:
-            print 'Cannot display scheme. IOError: {}'.format(err)
+            print('Cannot display scheme. IOError: {}'.format(err))

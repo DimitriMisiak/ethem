@@ -21,7 +21,7 @@ stroke_anti = [pe.Stroke(linewidth=2., foreground='white'),
              pe.Normal()]
 
 
-import ethem as eth
+#import ethem as eth
 
 plt.close('all')
 
@@ -29,14 +29,14 @@ fs = 1e3
 L = 100.
 N = int(L*fs)
 
-a,b,c,d,e,s = sy.symbols('a,b,c,d,e,s')
+a,b,c,d,e,s = sy.symbols('a,b,c,d,e,s', positive=True)
 
 S = 1e-1
 t,f = sy.symbols('t,f')
 
 signal_sym = sy.Heaviside(t) *sy.exp(-t/s)
 
-signal_fft_sym = sy.fourier_transform(signal_sym, t,f)
+A = signal_fft_sym = sy.fourier_transform(signal_sym, t,f)
 
 
 time = np.arange(0, L, fs**-1)
@@ -56,7 +56,7 @@ signal_sym_eval = (signal_sym/sy.Heaviside(t)).subs(s,S)
 signal_fun = sy.lambdify(t, signal_sym_eval, 'numpy')
 signal_sy = signal_fun(time)
 
-signal_fft_eval = signal_fft_sym.subs(s,S)
+signal_fft_eval = signal_fft_sym.subs(s,S)#.doit()
 signal_fft_fun = sy.lambdify(f, signal_fft_eval, 'numpy')
 signal_fft_sy = signal_fft_fun(freq)
 

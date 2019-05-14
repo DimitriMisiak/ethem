@@ -21,7 +21,7 @@ stroke_anti = [pe.Stroke(linewidth=2., foreground='white'),
              pe.Normal()]
 
 
-import ethem as eth
+#import ethem as eth
 
 plt.close('all')
 
@@ -81,4 +81,4 @@ for i,L in enumerate((100, 10, 1)):
 
 
 
-print 'done'
+print('done')

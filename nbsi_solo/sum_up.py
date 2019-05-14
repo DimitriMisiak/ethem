@@ -39,7 +39,7 @@ fs = 1e3
 #==============================================================================
 # STEADY STATE SOLUTION
 #==============================================================================
-sol_ss = eth.solve_sse(evad)
+sol_ss = eth.solve_sse(evad).x
 
 #==============================================================================
 # NUMERICAL INTEGRATION (NI)
@@ -120,10 +120,10 @@ ref_pulse_fft = eth.response_event(per, edict, fs)(fi_freq_fft)
 ref_freq_psd, ref_pulse_psd = eth.psd(ref_pulse_fft, fs)
 
 psd_fun_dict = eth.response_noise(edict)
-psd_eval_dict = {k:v(ref_freq_psd) for k,v in psd_fun_dict.iteritems()}
+psd_eval_dict = {k:v(ref_freq_psd) for k,v in psd_fun_dict.items()}
 
 obs_fun_dict = eth.measure_noise(ref_bath, edict)
-obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.iteritems()}
+obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.items()}
 
 #full_array = (
 #        np.sum(obs_eval_dict.values(), axis=0)
@@ -152,7 +152,7 @@ res = eth.res_ref(per, edict, fs, L, ref_bath, (inf, sup))
 res_msg = 'Resolution : {:.0f} eV'.format(
         res * energy.subs(edict) / (1.6e-19)
 )
-print res_msg
+print(res_msg)
 
 ##==============================================================================
 ## PLOT
@@ -186,12 +186,12 @@ for i in range(num):
     ax[i,2].plot(ni_freq_psd, ni_pulse_psd[i], label='NI')
     ax[i,2].plot(fi_freq_psd, fi_pulse_psd[i], label='FI')
     #ax[i,2].loglog(freq_welch, psd_welch, label='welch')
-    for k,v in psd_eval_dict.iteritems():
+    for k,v in psd_eval_dict.items():
         ax[i,2].plot(fi_freq_psd, v[i], label=k)
 
     if i == ref_ind:
 
-        for k,v in obs_eval_dict.iteritems():
+        for k,v in obs_eval_dict.items():
             ax[i,2].plot(fi_freq_psd, v, label=k)
 
         ax[i,2].plot(fi_freq_psd, full_array, label='full')
@@ -214,10 +214,10 @@ ax_ref[0].set_title('Response PSD ; NEP ; 1/NEP^2')
 
 ax_ref[0].plot(fi_freq_psd, fi_pulse_psd[ref_ind], label='1keV pulse')
 
-for k,v in psd_eval_dict.iteritems():
+for k,v in psd_eval_dict.items():
     ax_ref[0].plot(fi_freq_psd, v[ref_ind], label=k)
 
-for k,v in obs_eval_dict.iteritems():
+for k,v in obs_eval_dict.items():
     ax_ref[0].plot(fi_freq_psd, v, label=k)
 ax_ref[0].plot(fi_freq_psd, full_array, label='Tot Noise')
 

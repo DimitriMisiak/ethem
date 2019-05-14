@@ -52,10 +52,10 @@ freq_array = np.flip(np.arange(fs/2., 0., -L**-1), axis=0)
 
 
 psd_fun_dict = eth.response_noise(edict)
-psd_eval_dict = {k:v(freq_array) for k,v in psd_fun_dict.iteritems()}
+psd_eval_dict = {k:v(freq_array) for k,v in psd_fun_dict.items()}
 
 obs_fun_dict = eth.measure_noise(ref_bath, edict)
-obs_eval_dict = {k:v(freq_array) for k,v in obs_fun_dict.iteritems()}
+obs_eval_dict = {k:v(freq_array) for k,v in obs_fun_dict.items()}
 
 full_array = eth.noise_tot_fun(ref_bath, edict)(freq_array)
 
@@ -64,7 +64,7 @@ ref_10_ind = 0
 noise_level = full_array[ref_10_ind]
 
 #print 'Signal Level =', signal_level
-print 'Noise_Level =', noise_level
+print('Noise_Level =', noise_level)
 #==============================================================================
 # NOISE PSD PLOT
 #==============================================================================
@@ -72,12 +72,12 @@ fig, ax = plt.subplots(nrows=num, num='NOISE PSD PLOT', figsize=(9,9), squeeze=F
 ax = np.ravel(ax)
 for i in range(num):
 
-    for k,v in psd_eval_dict.iteritems():
+    for k,v in psd_eval_dict.items():
         ax[i].plot(freq_array, v[i], label=k)
 
     if i == ref_ind:
 
-        for k,v in obs_eval_dict.iteritems():
+        for k,v in obs_eval_dict.items():
             ax[i].plot(freq_array, v, label=k)
 
         ax[i].plot(freq_array, full_array, label='full', color='k', lw=2.)
@@ -109,7 +109,7 @@ A = eth.noise_tot_param(param_sym, evad, ref_bath)
 #AA = A(param_eval)
 #
 #noise_dict = dict()
-#for key, nfun in AA.iteritems():
+#for key, nfun in AA.items():
 #    noise_dict[key] = nfun(freq_array)
 
 plt.figure()
