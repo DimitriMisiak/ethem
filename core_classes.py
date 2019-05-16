@@ -146,7 +146,7 @@ class System(object):
         return System.admittance_matrix
 
     @classmethod
-    def build_sym(cls, savepath='results/check_output.txt'):
+    def build_sym(cls, savepath='ethem_system_output.txt'):
         """ Call other classmethod to defines or update all the symbolic
         attributes of the System. Also, pretty_print thiese symbolic attributes
         in a txt file.
