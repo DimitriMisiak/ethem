@@ -175,7 +175,7 @@ class Perturbation(object):
 
         self.matrix = per
         self.energy = energy
-        self. fraction = fraction
+        self.fraction = fraction
         self.tau_therm = tau_therm
 
         System.perturbation = self

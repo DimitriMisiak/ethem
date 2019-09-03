@@ -152,7 +152,6 @@ eth.System.build_sym(savepath='output/build_sym')
 # EVENT PERTURBATION
 #==============================================================================
 energy, tau_therm, eps = sy.symbols('E, tau_th, eps', positive=True)
-
 #per = sy.zeros(len(eth.System.bath_list), 1)
 #per[0] = eth.event_power(energy*0.01, tau_therm, time)
 #per[1] = eth.event_power(energy, tau_therm, time)
@@ -161,7 +160,8 @@ energy, tau_therm, eps = sy.symbols('E, tau_th, eps', positive=True)
 #ntd.perturbation = eth.event_power(energy, tau_therm, time)
 per = eth.Perturbation(energy,
                        [1-eps, 0., eps, 0.],
-                       [tau_therm, tau_therm, tau_therm, tau_therm])
+                       [tau_therm, tau_therm, tau_therm, tau_therm],
+                       )
 
 #==============================================================================
 # EVALUATION DICT
@@ -193,7 +193,7 @@ evad_sys = {load.resistivity : 2e9, # Ohms
 }
 
 evad_per = {
-            tau_therm : 1e-4, # s
+            tau_therm : 1e-3, # s
 #            tau_therm : 5e-3, # s
             energy : 1e3 * 1.6e-19, # J
             eps : 0., #fraction

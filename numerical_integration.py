@@ -52,17 +52,32 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     t = System.time
 
     capa_matrix = System.capacity_matrix
-    per_arg = capa_matrix**-1 * per / sy.Heaviside(t)
+    
+    ### TEST 2019/07/01 to fix Heaviside computation
+#    per_arg = capa_matrix**-1 * per / sy.Heaviside(t)
+    per_arg = capa_matrix**-1 * per
 
+    def my_heaviside(t):
+        return np.heaviside(t, 1.)
+        
     phi = System.phi_vect
 
     eteq = System.eteq
 
+    ###
+    print(per_arg)
+
     eteq_num = eteq.subs(eval_dict)
     per_num = per_arg.subs(eval_dict)
 
+    print(per_num)
+
     eteq_f = sy.lambdify([t]+list(phi), eteq_num, modules="numpy")
-    per_lambda = sy.lambdify([t]+list(phi), per_num, modules="numpy")
+    
+    ### TEST
+#    per_lambda = sy.lambdify([t]+list(phi), per_num, modules="numpy")   
+    per_lambda = sy.lambdify([t]+list(phi), per_num, modules=[{'Heaviside':my_heaviside}, 'numpy'])
+    
     funky = lambda x, t: eteq_f(t, *x).flatten() + per_lambda(t, *x).flatten()
 
     trange = np.arange(0, L, fs**-1)

@@ -9,9 +9,10 @@ electro-thermal modelling.
 
 import sympy as sy
 
+from .core_classes import System
 # physical constant
-kB = sy.symbols('kB')
-
+#kB = sy.symbols('kB')
+kB = System.kB
 
 def tfn_noise(G, T1, T2):
     """ Power Spectral Density level of the Thermal Fluctuation Noise in

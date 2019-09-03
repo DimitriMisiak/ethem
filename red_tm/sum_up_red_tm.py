@@ -126,7 +126,9 @@ edict = eth.dict_sse(evad)
 
 # time and freq array
 fi_time_array = np.arange(0, L, fs**-1)
-fi_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
+#fi_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
+corr=100
+fi_freq_fft = np.fft.fftfreq(int(L*fs*corr), (fs*corr)**-1)
 fi_freq_fftshift = np.fft.fftshift(fi_freq_fft)
 
 # fft freq
@@ -134,13 +136,23 @@ fi_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
 fi_pulse_fftshift = np.fft.fftshift(fi_pulse_fft)
 
 # temporal
-fi_pulse_array = np.real(np.fft.ifft(fi_pulse_fft, axis=1))
+fi_pulse_array = np.real(np.fft.ifft(fi_pulse_fft, axis=1))[:,::corr]*corr
+
+fi_pulse_array_lol = np.real(np.fft.ifft(fi_pulse_fft, axis=1))
 
 # pulse amplitude
 fi_amp = max(abs(fi_pulse_array[-1]))
 
 # fft psd
-fi_freq_psd, fi_pulse_psd = eth.psd(fi_pulse_fft, fs)
+fi_freq_psd, fi_pulse_psd = eth.psd(fi_pulse_fft, fs*corr)
+
+# welch
+from scipy.signal import welch
+freq_welch_fi, pulse_welch_fi = welch(fi_pulse_array, fs,
+                                window='boxcar', nperseg=int(L*fs))
+
+freq_welch_fi = freq_welch_fi[1:]
+pulse_welch_fi = pulse_welch_fi[:,1:]
 
 #==============================================================================
 # TEMPORAL DIAGONALIZATION
@@ -285,9 +297,15 @@ ni_level = ni_pulse_psd[-1, level_ind]
 fi_level = fi_pulse_psd[-1, level_ind]
 td_level = td_pulse_psd[-1, level_ind]
 welch_level = pulse_welch[-1, level_ind]
+fi_welch_level = pulse_welch_fi[-1, level_ind]
 
 for i in range(num):
 
+    ### test
+    ax[i].plot(freq_welch_fi, pulse_welch_fi[i],
+      label='FI Welch \n {:.2e} $V^2$/Hz'.format(fi_welch_level),
+      drawstyle='steps-mid',color='gold', lw=3, alpha=0.5)
+    
     ax[i].plot(ni_freq_psd, ni_pulse_psd[i],
       label='Numerical Integration \n {:.2e} $V^2$/Hz'.format(ni_level),
       drawstyle='steps-mid',)
@@ -300,6 +318,7 @@ for i in range(num):
     ax[i].plot(freq_welch, pulse_welch[i],
       label='TD Welch \n {:.2e} $V^2$/Hz'.format(welch_level),
       drawstyle='steps-mid',)
+
     for f in f0_array:
         ax[i].axvline(f, ls=':', color='k')
     ax[i].set_xscale('log')
@@ -315,7 +334,7 @@ fig.legend(handles, labels, loc='right', title=f0_msg)
 fig.tight_layout(rect=(0.,0.,0.7,1.))
 fig.show()
 
-print('PSD LEvel : ', ni_level, fi_level, td_level, welch_level)
+print('PSD LEvel : ', ni_level, fi_level, td_level, welch_level, fi_welch_level)
 
 #==============================================================================
 # NOISE RESPONSE

@@ -24,6 +24,9 @@ class System(object):
     # time and frequency symbols
     time, freq = sy.symbols('t, f')
 
+    # Boltzmann constant symbol
+    kB = sy.symbols('kB')
+
     @classmethod
     def checkpoint(cls):
         """ Fast checking the elements of the system by printing theier label.

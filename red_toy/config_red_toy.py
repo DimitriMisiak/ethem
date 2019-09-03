@@ -151,7 +151,7 @@ eth.System.build_sym(savepath='output/build_sym')
 #==============================================================================
 # EVENT PERTURBATION
 #==============================================================================
-energy, tau_therm, eps = sy.symbols('E, tau_th, eps')
+energy, tau_therm, eps = sy.symbols('E, tau_th, eps', positive=True)
 
 per = eth.Perturbation(energy,
                        [1-eps, 0., eps, 0.],
