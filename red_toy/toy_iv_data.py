@@ -8,18 +8,15 @@ nbsi_solo and nbsi_duo detectors.
 """
 
 # adding ethem module path to the pythonpath
-import sys
 import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.linalg as LA
-from os.path import dirname, abspath
 import csv
 
 import ethem as eth
 
 import config_red_toy as config
-from config_red_toy import evad
+from config_red_toy import syst, evad
 
 plt.close('all')
 
@@ -38,11 +35,11 @@ t_array = np.linspace(0.015, 0.050, 10)
 
 
 param_sym = (
-        eth.System.Voltstat_b.voltage,
-        eth.System.Thermostat_b.temperature
+        syst.Voltstat_b.voltage,
+        syst.Thermostat_b.temperature
 )
 
-ss_point = eth.solve_sse_param(param_sym, evad)
+ss_point = eth.solve_sse_param(syst, param_sym, evad)
 
 iv_dict = dict()
 for p in tqdm.tqdm(t_array):
@@ -60,17 +57,19 @@ for p in tqdm.tqdm(t_array):
 
 fig = plt.figure('Toy IV data')
 
-for t in np.sort(iv_dict.keys()):
+keys_sorted = np.sort(list(iv_dict.keys()))
+
+for t in keys_sorted:
     i_array, v_array = iv_dict[t]
     plt.errorbar(i_array, v_array, yerr=v_array*0.1,
                  lw=1., ls='-',
                  label='{0:.1f} mK'.format(t*1e3))
 
-with open('output/lol.csv',mode='wb') as f:
+with open('output/lol.csv',mode='w') as f:
     f.write('# current I\tvoltageV\tTemperature T\n')
 
     w = csv.writer(f, delimiter='\t')
-    for t in np.sort(iv_dict.keys()):
+    for t in keys_sorted:
 
         for i,v in iv_dict[t].T:
             w.writerow([i, v, t])

@@ -8,11 +8,11 @@ electro-thermal system.
 """
 
 import sympy as sy
-from .core_classes import RealBath, System
+from .core_classes import RealBath
 from .evaluation import lambda_fun, lambdify_fun
 from .steady_state import solve_sse_param
 
-def noise_flux_vects():
+def noise_flux_vects(system):
     """ Returns a dictionnary of the different noise power affecting
     the system. The keys indicates the source of the noise. The values are
     noise perturbation vectors (LPSD) .
@@ -25,7 +25,7 @@ def noise_flux_vects():
         Dictionnary with keys labelling the noise source, and the values
         being the symbolic noise matrix associated.
     """
-    bath_list = System.bath_list
+    bath_list = system.bath_list
     num = len(bath_list)
     vects = dict()
     # internal noise of the thermal/electric bath
@@ -68,7 +68,7 @@ def noise_flux_vects():
     return vects
 
 
-def noise_flux_fun(eval_dict):
+def noise_flux_fun(system, eval_dict):
     """ Returns a dictionnary of the different noise power function affecting
     the system. The keys indicates the source of the noise. The values are
     noise perturbation vectors (LPSD) .
@@ -86,18 +86,18 @@ def noise_flux_fun(eval_dict):
         Dictionnary with keys labelling the noise source, and the values
         being the noise matrix function of the frequencies.
     """
-    noise_dict = noise_flux_vects()
+    noise_dict = noise_flux_vects(system)
 
     fun_dict = dict()
 
     def fun_maker(noi):
 
         # FIXING SYMPY LAMBDIFY BROADCASTING
-        noi[0] += 1e-40 * System.freq
+        noi[0] += 1e-40 * system.freq
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(System.freq, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(system.freq, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambda_fun(noise_fun_simple, frange)
 
@@ -110,7 +110,7 @@ def noise_flux_fun(eval_dict):
     return fun_dict
 
 
-def noise_flux_fun_param(param, eval_dict, auto_ss=True):
+def noise_flux_fun_param(system, param, eval_dict, auto_ss=True):
 
     npar = len(param)
 
@@ -122,20 +122,20 @@ def noise_flux_fun_param(param, eval_dict, auto_ss=True):
         except:
             pass
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
 
-    noise_dict = noise_flux_vects()
+    noise_dict = noise_flux_vects(system)
 
-    args_lambda = (System.freq,) + phi + param
+    args_lambda = (system.freq,) + phi + param
 
     if auto_ss:
-        ss_fun = solve_sse_param(param, eval_dict)
+        ss_fun = solve_sse_param(system, param, eval_dict)
 
     noise_dict_simple = dict()
     for key, noi in noise_dict.items():
 
         # FIXING SYMPY LAMBDIFY BROADCASTING
-        noi[0] += 1e-40 * System.freq
+        noi[0] += 1e-40 * system.freq
 
         noise_num = noi.subs(char_dict)
         noise_fun_simple = sy.lambdify(args_lambda, noise_num, modules="numpy")
@@ -167,7 +167,7 @@ def noise_flux_fun_param(param, eval_dict, auto_ss=True):
     return noise_flux_fun_aux
 
 
-def noise_obs_fun(ref_bath, eval_dict):
+def noise_obs_fun(system, ref_bath, eval_dict):
     """ Returns a dictionnary of the different observationnal noise function
     affecting the system. The keys indicates the source of the noise.
     The values are noise perturbation vectors (LPSD) .
@@ -193,7 +193,7 @@ def noise_obs_fun(ref_bath, eval_dict):
 
         noise_num = noi.subs(eval_dict)
 
-        noise_fun_simple = sy.lambdify(System.freq, noise_num, modules="numpy")
+        noise_fun_simple = sy.lambdify(system.freq, noise_num, modules="numpy")
 
         noise_fun_array = lambda frange: lambdify_fun(noise_fun_simple, frange)
 
@@ -206,7 +206,7 @@ def noise_obs_fun(ref_bath, eval_dict):
     return fun_dict
 
 
-def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
+def noise_obs_param(system, param, eval_dict, ref_bath, auto_ss=True):
 
     npar = len(param)
 
@@ -218,14 +218,14 @@ def noise_obs_param(param, eval_dict, ref_bath, auto_ss=True):
         except:
             pass
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
 
     noise_dict = ref_bath.noise_obs
 
-    args_lambda = (System.freq,) + phi + param
+    args_lambda = (system.freq,) + phi + param
 
     if auto_ss:
-        ss_fun = solve_sse_param(param, eval_dict)
+        ss_fun = solve_sse_param(system, param, eval_dict)
 
     noise_dict_simple = dict()
     for key, noi in noise_dict.items():

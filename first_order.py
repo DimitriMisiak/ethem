@@ -10,12 +10,11 @@ import numpy as np
 import sympy as sy
 
 from .evaluation import lambda_fun_mat, lambda_fun
-from .core_classes import System
 from .noise import noise_flux_fun, noise_obs_fun, noise_obs_param, noise_flux_fun_param
 from .psd import psd
 from .steady_state import solve_sse_param
 
-def impedance_matrix_fun(eval_dict):
+def impedance_matrix_fun(system, eval_dict):
     """ Return a function accepting an numpy.array with the broadcasting
     ability of numpy.
     The function returns the response matrix, or complex impedance matrix
@@ -35,16 +34,16 @@ def impedance_matrix_fun(eval_dict):
     cimeq_fun :Function taking an numpy.array as parameter and returnign an
         array of matrices, mimicking the broadcasting ability of numpy.
     """
-    admat = System.admittance_matrix
+    admat = system.admittance_matrix
     admat_num = admat.subs(eval_dict)
-    admat_funk = sy.lambdify(System.freq, admat_num, modules="numpy")
+    admat_funk = sy.lambdify(system.freq, admat_num, modules="numpy")
 
     admat_fun = lambda f: np.linalg.inv(lambda_fun_mat(admat_funk, f))
 
     return admat_fun
 
 
-def impedance_matrix_param(param, eval_dict, auto_ss=True):
+def impedance_matrix_param(system, param, eval_dict, auto_ss=True):
     """ Return a function accepting an numpy.array with the broadcasting
     ability of numpy.
     The function returns the response matrix, or complex impedance matrix
@@ -74,15 +73,15 @@ def impedance_matrix_param(param, eval_dict, auto_ss=True):
         except:
             pass
 
-    admat = System.admittance_matrix
+    admat = system.admittance_matrix
     admat_num = admat.subs(char_dict)
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
 
-    admat_simple = sy.lambdify((System.freq,)+phi+param, admat_num, modules="numpy")
+    admat_simple = sy.lambdify((system.freq,)+phi+param, admat_num, modules="numpy")
 
     if auto_ss:
-        ss_fun = solve_sse_param(param, eval_dict)
+        ss_fun = solve_sse_param(system, param, eval_dict)
 
     def impedance_matrix_fun(p, sol_ss=[]):
         """ Return a function taking in argument a frequency numpy.array and
@@ -105,7 +104,7 @@ def impedance_matrix_param(param, eval_dict, auto_ss=True):
     return impedance_matrix_fun
 
 
-def eigen_fun(eval_dict):
+def eigen_fun(system, eval_dict):
     """ Diagonalize of the coupling matrix and return the amplitude and the
     time constants for the temporal pulses.
     Assuming a Dirac power injection to start with.
@@ -114,7 +113,7 @@ def eigen_fun(eval_dict):
     ========
 
     """
-    coup_mat = System.coupling_matrix
+    coup_mat = system.coupling_matrix
     coup_mat_num = coup_mat.subs(eval_dict)
     coup_mat_eval = np.array(coup_mat_num).astype('float64')
 
@@ -125,8 +124,8 @@ def eigen_fun(eval_dict):
     proj_inv = np.linalg.inv(proj)
 
     import sympy as sy
-    per = System.perturbation
-    per_td = (System.capacity_matrix)**-1 * sy.Matrix(per.fraction)
+    per = system.perturbation
+    per_td = (system.capacity_matrix)**-1 * sy.Matrix(per.fraction)
 
     phi_amp = [float((f*per.energy).subs(eval_dict)) for f in per_td]
     eig_amp = proj_inv.dot(phi_amp)
@@ -141,7 +140,7 @@ def eigen_fun(eval_dict):
     return tau_coup, eig_amp, pulse_fun
 
 
-def eigen_param(param, eval_dict, auto_ss=True):
+def eigen_param(system, param, eval_dict, auto_ss=True):
 
     npar = len(param)
 
@@ -153,20 +152,20 @@ def eigen_param(param, eval_dict, auto_ss=True):
         except:
             pass
 
-    coup_mat = System.coupling_matrix
+    coup_mat = system.coupling_matrix
     coup_mat_num = coup_mat.subs(char_dict)
 
-    per = System.perturbation
-    per_matrix = (System.capacity_matrix)**-1 * sy.Matrix(per.fraction) * per.energy
+    per = system.perturbation
+    per_matrix = (system.capacity_matrix)**-1 * sy.Matrix(per.fraction) * per.energy
     per_num = per_matrix.subs(char_dict)
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
 
     coup_mat_simple = sy.lambdify(phi+param, coup_mat_num, modules="numpy")
     per_simple = sy.lambdify(phi+param, per_num, modules="numpy")
 
     if auto_ss:
-        ss_fun = solve_sse_param(param, eval_dict)
+        ss_fun = solve_sse_param(system, param, eval_dict)
 
     def eigen_fun(p, sol_ss=[]):
         assert len(p) == npar
@@ -200,7 +199,7 @@ def eigen_param(param, eval_dict, auto_ss=True):
     return eigen_fun
 
 
-def per_fft(per):
+def per_fft(system):
     """ Return the symbolic expression of the fourier transform of the event
     perturbation.
 
@@ -215,16 +214,17 @@ def per_fft(per):
         Fourier transform of the event perturbation, is a function of
         frequency.
     """
+    per = system.perturbation.matrix
     perf = sy.zeros(*per.shape)
 
     # apply the fourier transform on each term
     for k, p in enumerate(per):
-        perf[k] = sy.fourier_transform(p, System.time, System.freq)
+        perf[k] = sy.fourier_transform(p, system.time, system.freq)
 
     return perf
 
 
-def per_fft_fun(per, eval_dict, fs):
+def per_fft_fun(system, eval_dict, fs):
     """ Return a FFT function, as in Discrete Fourier Transform function.
     Return a function accepting a numpy.array with the broadcasting
     ability of numpy.
@@ -246,23 +246,23 @@ def per_fft_fun(per, eval_dict, fs):
         returnign an array of matrices,
         mimicking the broadcasting ability of numpy.
     """
-    perf = per_fft(per)
+    perf = per_fft(system)
 
     # multiplication by the sampling frequency to respect homogeneity later...
     perf_num = perf.subs(eval_dict) * fs
 #    perf_num = perf.subs(eval_dict)
 
     # FIXING SYMPY LAMBDIFY BROADCASTING
-    perf_num[0] += 1e-40 * System.freq
+    perf_num[0] += 1e-40 * system.freq
 
-    perf_fun_simple = sy.lambdify(System.freq, perf_num, modules="numpy")
+    perf_fun_simple = sy.lambdify(system.freq, perf_num, modules="numpy")
 
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 
     return perf_fun_array
 
 
-def per_ft_fun(per, eval_dict):
+def per_ft_fun(system, eval_dict):
     """ Return a continuous fourier transform function.
     Return a function accepting a numpy.array with the broadcasting
     ability of numpy.
@@ -284,21 +284,21 @@ def per_ft_fun(per, eval_dict):
         returnign an array of matrices,
         mimicking the broadcasting ability of numpy.
     """
-    perf = per_fft(per)
+    perf = per_fft(system)
 
     perf_num = perf.subs(eval_dict)
 
     # FIXING SYMPY LAMBDIFY BROADCASTING
-    perf_num[0] += 1e-40 * System.freq
+    perf_num[0] += 1e-40 * system.freq
 
-    perf_fun_simple = sy.lambdify(System.freq, perf_num, modules="numpy")
+    perf_fun_simple = sy.lambdify(system.freq, perf_num, modules="numpy")
 
     perf_fun_array = lambda frange: lambda_fun(perf_fun_simple, frange)
 
     return perf_fun_array
 
 
-def per_param(param, eval_dict):
+def per_param(system, param, eval_dict):
 
     npar = len(param)
 
@@ -310,9 +310,9 @@ def per_param(param, eval_dict):
         except:
             pass
 
-    per_num = (System.perturbation.matrix).subs(char_dict)
+    per_num = (system.perturbation.matrix).subs(char_dict)
 
-    perf_fun_simple = sy.lambdify((System.time,)+param, per_num,
+    perf_fun_simple = sy.lambdify((system.time,)+param, per_num,
                                   ['numpy', {'Heaviside': lambda x: np.heaviside(x,1)}])
 
     def per_fun(p):
@@ -328,7 +328,7 @@ def per_param(param, eval_dict):
     return per_fun
 
 
-def perf_param(param, eval_dict):
+def perf_param(system, param, eval_dict):
     npar = len(param)
 
     char_dict = eval_dict.copy()
@@ -339,14 +339,14 @@ def perf_param(param, eval_dict):
         except:
             pass
 
-    perf = per_fft(System.perturbation.matrix)
+    perf = per_fft(system)
 
     perf_num = perf.subs(char_dict)
 
     # FIXING SYMPY LAMBDIFY BROADCASTING
-    perf_num[0] += 1e-40 * System.freq
+    perf_num[0] += 1e-40 * system.freq
 
-    perf_fun_simple = sy.lambdify((System.freq,)+param, perf_num, 'numpy')
+    perf_fun_simple = sy.lambdify((system.freq,)+param, perf_num, 'numpy')
 
     def per_fun(p):
 
@@ -361,7 +361,7 @@ def perf_param(param, eval_dict):
     return per_fun
 
 
-def response_event(per, eval_dict, fs):
+def response_event(system, eval_dict, fs):
     """ Return the response function (fft) of the system to
     a given perturbation in the frequency space.
 
@@ -381,9 +381,9 @@ def response_event(per, eval_dict, fs):
     sens_fun : function
         Taking the frequency array as parameter, return the response array.
     """
-    cimeq_fun = impedance_matrix_fun(eval_dict)
+    cimeq_fun = impedance_matrix_fun(system, eval_dict)
 
-    perf_fun = per_fft_fun(per, eval_dict, fs)
+    perf_fun = per_fft_fun(system, eval_dict, fs)
 
     def sens_fun(frange):
         cimeq_array = cimeq_fun(frange)
@@ -397,7 +397,7 @@ def response_event(per, eval_dict, fs):
     return sens_fun
 
 
-def response_event_ft(per, eval_dict):
+def response_event_ft(system, eval_dict):
     """ Return the response function (FT be careful !!) of the system to
     a given perturbation in the frequency space.
 
@@ -415,9 +415,9 @@ def response_event_ft(per, eval_dict):
     sens_fun : function
         Taking the frequency array as parameter, return the response array.
     """
-    cimeq_fun = impedance_matrix_fun(eval_dict)
+    cimeq_fun = impedance_matrix_fun(system, eval_dict)
 
-    perf_fun = per_ft_fun(per, eval_dict)
+    perf_fun = per_ft_fun(system, eval_dict)
 
     def sens_fun(frange):
         cimeq_array = cimeq_fun(frange)
@@ -431,12 +431,12 @@ def response_event_ft(per, eval_dict):
     return sens_fun
 
 
-def response_event_param(param, eval_dict):
+def response_event_param(system, param, eval_dict):
     """ might be possible to speed up the computation with a mutual
     solve_sse_param and a wise no-use of the auto-ss optionnal parameter.
     """
-    cimeq_param_fun = impedance_matrix_param(param, eval_dict)
-    perf_param_fun = perf_param(param, eval_dict)
+    cimeq_param_fun = impedance_matrix_param(system, param, eval_dict)
+    perf_param_fun = perf_param(system, param, eval_dict)
 
 
     def response_event_fun(p):
@@ -459,7 +459,7 @@ def response_event_param(param, eval_dict):
     return response_event_fun
 
 
-def psd_response_event(per, eval_dict, fs, L):
+def psd_response_event(system, eval_dict, fs, L):
     """ Return the psd arrays of the system response.
 
     Parameters
@@ -488,14 +488,14 @@ def psd_response_event(per, eval_dict, fs, L):
     """
     freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
 
-    response_fft = response_event(per, eval_dict, fs)(freq_fft)
+    response_fft = response_event(system, eval_dict, fs)(freq_fft)
 
     freq_psd, response_psd = psd(response_fft, fs)
 
     return freq_psd, response_psd
 
 
-def psd_response_event_ref(per, eval_dict, fs, L, ref_bath):
+def psd_response_event_ref(system, eval_dict, fs, L, ref_bath):
     """ Projection of the ethem.psd_response_event function
     on the reference bath used for the measure.
 
@@ -506,14 +506,14 @@ def psd_response_event_ref(per, eval_dict, fs, L, ref_bath):
     ========
     ethem.psd_response_event
     """
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
-    freq_psd, response_psd = psd_response_event(per, eval_dict, fs, L)
+    freq_psd, response_psd = psd_response_event(system, eval_dict, fs, L)
 
     return freq_psd, response_psd[ref_ind]
 
 
-def response_noise(eval_dict):
+def response_noise(system, eval_dict):
     """ Return the response function of the system to noise psd
     perturbation in the frequency space.
 
@@ -530,9 +530,9 @@ def response_noise(eval_dict):
         the corresponding response function taking as parameter the frequency
         array and returning the response array.
     """
-    cimeq_fun = impedance_matrix_fun(eval_dict)
+    cimeq_fun = impedance_matrix_fun(system, eval_dict)
 
-    noise_fun_dict = noise_flux_fun(eval_dict)
+    noise_fun_dict = noise_flux_fun(system, eval_dict)
 
     psd_fun_dict = dict()
 
@@ -560,11 +560,11 @@ def response_noise(eval_dict):
     return psd_fun_dict
 
 
-def response_noise_param(param, eval_dict):
+def response_noise_param(system, param, eval_dict):
 
-    cimeq_param_fun = impedance_matrix_param(param, eval_dict)
+    cimeq_param_fun = impedance_matrix_param(system, param, eval_dict)
 
-    noise_param_fun = noise_flux_fun_param(param, eval_dict)
+    noise_param_fun = noise_flux_fun_param(system, param, eval_dict)
 
     def response_noise_fun(p):
 
@@ -597,7 +597,7 @@ def response_noise_param(param, eval_dict):
     return response_noise_fun
 
 
-def response_noise_ref(eval_dict, ref_bath):
+def response_noise_ref(system, eval_dict, ref_bath):
     """ Projection of the ethem.response_noise function on the reference bath
     used for the measure.
 
@@ -608,9 +608,9 @@ def response_noise_ref(eval_dict, ref_bath):
     ========
     ethem.response_noise
     """
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
-    noise_dict = response_noise(eval_dict)
+    noise_dict = response_noise(system, eval_dict)
 
     noise_ref_dict = dict()
 
@@ -629,7 +629,7 @@ def response_noise_ref(eval_dict, ref_bath):
     return noise_ref_dict
 
 
-def measure_noise(ref_bath, eval_dict):
+def measure_noise(system, ref_bath, eval_dict):
     """ Return the observationnal noise psd perturbation
     in the frequency space.
 
@@ -648,7 +648,7 @@ def measure_noise(ref_bath, eval_dict):
         the corresponding noise function taking as parameter the frequency
         array and returning the noise array.
     """
-    noise_fun_dict = noise_obs_fun(ref_bath, eval_dict)
+    noise_fun_dict = noise_obs_fun(system, ref_bath, eval_dict)
 
     psd_fun_dict = dict()
 
@@ -672,9 +672,9 @@ def measure_noise(ref_bath, eval_dict):
     return psd_fun_dict
 
 
-def measure_noise_param(param, eval_dict, ref_bath):
+def measure_noise_param(system, param, eval_dict, ref_bath):
 
-    noise_param_fun = noise_obs_param(param, eval_dict, ref_bath)
+    noise_param_fun = noise_obs_param(system, param, eval_dict, ref_bath)
 
     def measure_noise_fun(p):
 
@@ -702,7 +702,7 @@ def measure_noise_param(param, eval_dict, ref_bath):
 
     return measure_noise_fun
 
-def noise_tot_fun(ref_bath, eval_dict):
+def noise_tot_fun(system, ref_bath, eval_dict):
     """ Return the total noise psd perturbation function
     in the frequency space.
 
@@ -719,11 +719,11 @@ def noise_tot_fun(ref_bath, eval_dict):
     noise_fun : function
         Taking the frequency array as parameter, return the noise array.
     """
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
-    obs_dict = measure_noise(ref_bath, eval_dict)
+    obs_dict = measure_noise(system, ref_bath, eval_dict)
 
-    sys_dict = response_noise(eval_dict)
+    sys_dict = response_noise(system, eval_dict)
 
     def noise_fun(frange):
 
@@ -740,12 +740,12 @@ def noise_tot_fun(ref_bath, eval_dict):
     return noise_fun
 
 
-def noise_tot_param(param, eval_dict, ref_bath):
+def noise_tot_param(system, param, eval_dict, ref_bath):
 
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
-    obs_dict_fun = measure_noise_param(param, eval_dict, ref_bath)
-    sys_dict_fun = response_noise_param(param, eval_dict)
+    obs_dict_fun = measure_noise_param(system, param, eval_dict, ref_bath)
+    sys_dict_fun = response_noise_param(system, param, eval_dict)
 
     def noise_tot_fun(p):
 
@@ -769,7 +769,7 @@ def noise_tot_param(param, eval_dict, ref_bath):
     return noise_tot_fun
 
 
-def nep_ref(per, eval_dict, fs, L, ref_bath):
+def nep_ref(system, eval_dict, fs, L, ref_bath):
     """ Return the nep array in the reference bath by computing
     the response psd of the system and the total noise.
 
@@ -777,7 +777,7 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     ==========
     per : Sympy matrix
         Power perturbation of the system. Its shape must matches the one
-        of System.admittance_matrix**-1
+        of system.admittance_matrix**-1
     eval_dict : dict
         Evaluation dictionnary in first oder approximation i.e. evaluated
         for the main_quant in phi_vect.
@@ -800,14 +800,14 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     ethem.psd_response_event_ref, ethem.noise_tot_fun
 
     """
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
     freq_array = np.linspace(1, fs/2., int(fs*L/2.))
 
-    pulse_fun = response_event_ft(per, eval_dict)
+    pulse_fun = response_event_ft(system, eval_dict)
     pulse_array = pulse_fun(freq_array)[ref_ind]
 
-    noise_fun = noise_tot_fun(ref_bath, eval_dict)
+    noise_fun = noise_tot_fun(system, ref_bath, eval_dict)
 
     noise_array = noise_fun(freq_array)
 
@@ -815,13 +815,13 @@ def nep_ref(per, eval_dict, fs, L, ref_bath):
     return freq_array, nep_array
 
 
-def nep_ref_param(param, eval_dict, ref_bath):
+def nep_ref_param(system, param, eval_dict, ref_bath):
 
-    ref_ind = System.bath_list.index(ref_bath)
+    ref_ind = system.bath_list.index(ref_bath)
 
-    pulse_param = response_event_param(param, eval_dict)
+    pulse_param = response_event_param(system, param, eval_dict)
 
-    noise_param = noise_tot_param(param, eval_dict, ref_bath)
+    noise_param = noise_tot_param(system, param, eval_dict, ref_bath)
 
     def nep_ref_fun(p):
 
@@ -885,7 +885,7 @@ def nep_to_res(freq_array, nep_array, flim=None):
     return res
 
 
-def res_ref(per, eval_dict, fs, L, ref_bath, flim):
+def res_ref(system, eval_dict, fs, L, ref_bath, flim):
     """ Return the resolution value. No need for byproduct (nep_array, etc)
     for this function.
 
@@ -918,17 +918,17 @@ def res_ref(per, eval_dict, fs, L, ref_bath, flim):
     ========
     ethem.nep_ref, ethem.nep_to_res
     """
-    freq_array, nep_array = nep_ref(per, eval_dict, fs, L, ref_bath)
+    freq_array, nep_array = nep_ref(system, eval_dict, fs, L, ref_bath)
     res = nep_to_res(freq_array, nep_array, flim)
 
     return res
 
 
-def res_ref_param(param, eval_dict, ref_bath, fs, L, flim=None):
+def res_ref_param(system, param, eval_dict, ref_bath, fs, L, flim=None):
 
     freq_array = np.flip(np.arange(fs/2., 0, -L**-1), axis=0)
 
-    nep_array_fun = nep_ref_param(param, eval_dict, ref_bath)
+    nep_array_fun = nep_ref_param(system, param, eval_dict, ref_bath)
 
     def res_ref_fun(p):
         nep_array = nep_array_fun(p)(freq_array)

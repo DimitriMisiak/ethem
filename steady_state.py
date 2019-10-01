@@ -12,8 +12,51 @@ import sympy as sy
 from scipy.optimize import root
 from scipy.integrate import odeint
 
-from .core_classes import System
 from .et_classes import ThermalBath, Thermostat, Capacitor
+
+
+def phi_init(system, eval_dict):
+    """ Return the intial vector used for the search of the steady-state
+    solution. For the capacitor, the initial voltage is set to 0. For the
+    thermal bath, the initial temperature is set to the lowest thermostat
+    temperature of the system. If none exists, the intial temperature is
+    set to 0.
+
+    Parameters
+    ==========
+    eval_dict : dict
+        Evaluation dictionnary.
+
+    Return
+    ======
+    init : list of float
+        Initial vector.
+    """
+    bath_list = system.bath_list
+
+    v0 = 0.0 #V
+    t0 = 0.0 #K
+
+    # retreive all the Thermostat in the System
+    thermo_list = system.subclass_list(Thermostat)
+    # keep only the pure Thermostas class, not the subclass
+    pure_list = list(set(thermo_list) - set(bath_list))
+    if len(pure_list):
+        temp_list = [(b.temperature).subs(eval_dict) for b in pure_list]
+        t0 = float(min(temp_list))
+
+    init = []
+    for b in bath_list:
+        if isinstance(b, Capacitor):
+            init.append(v0)
+        elif isinstance(b, ThermalBath):
+            init.append(t0)
+        else:
+            raise Exception('Invalid class in System.bath_list'
+                            '(only valid: Capacitor and ThermalBath).'
+                            'Class is '.format(type(b)))
+
+    return init
 
 
 def solve_sse_perf(fun, x0, safe_odeint=True, **kwargs):
@@ -65,7 +108,7 @@ def solve_sse_perf(fun, x0, safe_odeint=True, **kwargs):
     return sol
 
 
-def solve_sse(eval_dict, x0=None, safe_odeint=True, **kwargs):
+def solve_sse(system, eval_dict, x0=None, safe_odeint=True, **kwargs):
     """ Solve the steady-state for the eth.System, automatically fetching
     the initial vector and the system of equations.
 
@@ -98,16 +141,16 @@ def solve_sse(eval_dict, x0=None, safe_odeint=True, **kwargs):
     eth.phi_init, eth.solve_sse_perf
     """
     # Quantities to be evaluated by the resolution
-    phi = System.phi_vect
+    phi = system.phi_vect
 
     if x0 is None:
-        x0 = phi_init(eval_dict)
+        x0 = phi_init(system, eval_dict)
     else:
         # checking that the initial vector is adapted in length
         assert len(phi) == len(x0)
 
     # Steady state equations
-    eteq = System.eteq.subs(eval_dict)
+    eteq = system.eteq.subs(eval_dict)
 
     # checking that all symbols the desired symbols are evaluated
     # if an error is raised, a term is missing from the given dictionnary
@@ -124,7 +167,7 @@ def solve_sse(eval_dict, x0=None, safe_odeint=True, **kwargs):
     return sol
 
 
-def solve_sse_param(param, eval_dict):
+def solve_sse_param(system, param, eval_dict):
     """ Return an auxiliary function solving the steady-state of eth.System
     for a configuration of the given parameters. This is efficient to
     compute current-voltage curve or do multiple resolution of the
@@ -164,10 +207,10 @@ def solve_sse_param(param, eval_dict):
         except:
             pass
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
     nphi = len(phi)
 
-    eteq_list = list((System.eteq).subs(char_dict))
+    eteq_list = list((system.eteq).subs(char_dict))
     eteq_lambda = sy.lambdify(phi+param, eteq_list, 'math')
 
     def solve_sse_fun(x, phi0=None, safe_odeint=True, **kwargs):
@@ -207,7 +250,7 @@ def solve_sse_param(param, eval_dict):
         if phi0 is None:
             param_dict = {s:v for s,v in zip(param, x)}
             char_dict.update(param_dict)
-            phi0 = phi_init(char_dict)
+            phi0 = phi_init(system, char_dict)
         else:
             assert len(phi0) == nphi, "Invalid initial vector size."
 
@@ -222,51 +265,7 @@ def solve_sse_param(param, eval_dict):
     return solve_sse_fun
 
 
-def phi_init(eval_dict):
-    """ Return the intial vector used for the search of the steady-state
-    solution. For the capacitor, the initial voltage is set to 0. For the
-    thermal bath, the initial temperature is set to the lowest thermostat
-    temperature of the system. If none exists, the intial temperature is
-    set to 0.
-
-    Parameters
-    ==========
-    eval_dict : dict
-        Evaluation dictionnary.
-
-    Return
-    ======
-    init : list of float
-        Initial vector.
-    """
-    bath_list = System.bath_list
-
-    v0 = 0.0 #V
-    t0 = 0.0 #K
-
-    # retreive all the Thermostat in the System
-    thermo_list = System.subclass_list(Thermostat)
-    # keep only the pure Thermostas class, not the subclass
-    pure_list = list(set(thermo_list) - set(bath_list))
-    if len(pure_list):
-        temp_list = [(b.temperature).subs(eval_dict) for b in pure_list]
-        t0 = float(min(temp_list))
-
-    init = []
-    for b in bath_list:
-        if isinstance(b, Capacitor):
-            init.append(v0)
-        elif isinstance(b, ThermalBath):
-            init.append(t0)
-        else:
-            raise Exception('Invalid class in System.bath_list'
-                            '(only valid: Capacitor and ThermalBath).'
-                            'Class is '.format(type(b)))
-
-    return init
-
-
-def dict_sse(eval_dict, **kwargs):
+def dict_sse(system, eval_dict, **kwargs):
     """ Return an evaluation dictionnary with the steady-state solution.
 
     Parameters
@@ -285,7 +284,7 @@ def dict_sse(eval_dict, **kwargs):
     --------
     eth.solve_sse
     """
-    sol_ss = solve_sse(eval_dict, **kwargs)
+    sol_ss = solve_sse(system, eval_dict, **kwargs)
 
     if not sol_ss.success:
         warnings.warn("""ethem.solve_see was not successful.\n
@@ -293,96 +292,9 @@ def dict_sse(eval_dict, **kwargs):
                       {}
                       """.format(sol_ss.message))
 
-    sse_dict = {bath.main_quant:sol for bath,sol in zip(System.bath_list, sol_ss.x)}
+    sse_dict = {bath.main_quant:sol for bath,sol in zip(system.bath_list, sol_ss.x)}
 
     eval_dict_sse = eval_dict.copy()
     eval_dict_sse.update(sse_dict)
 
     return eval_dict_sse
-
-#==============================================================================
-# DEPRECATED
-# for backward compatibility
-# meant to be purge and forgotten one day
-#==============================================================================
-
-def solve_sse_old(eval_dict, x0, method=None, printsuccess=False):
-    """ Solve the steady-state system for the given system characteristics.
-
-    Parameters:
-    ===========
-    eval_dict :dict
-        Contains the evaluation values for the system characteristics symbols.
-    x0 : array_like
-        Initial vector for the resolution.
-    method : str, optional
-        Type of solver. See scipy.optimize.root for more precision. By default,
-        set to None which uses 'lm' method.
-
-    Returns:
-    ========
-    sol.x : numpy.ndarray
-        Solution vector, returned in the same order as bath_list.
-
-    See also:
-    =========
-    scipy.optimize.root
-    """
-    # Quantities to be evaluated by the resolution
-    phi = System.phi_vect
-    # checking that the initial vector is adapted in length
-    assert len(phi) == len(x0)
-
-    # Steady state equations
-    sseq = System.sseq.subs(eval_dict)
-
-    # checking that all symbols the desired symbols are evaluated
-    # if an error is raised, a term is missing from the given dictionnary
-    assert set(phi) == set(sseq.free_symbols)
-
-    # process the sympy equations into a function adaptated to scipy root
-    funk = sy.lambdify(phi, sseq, 'numpy')
-    system_eq = lambda x: np.squeeze(funk(*x))
-
-    if method is None:
-        method = 'lm'
-
-    # Resolution with scipy.optimize.root
-    sol = root(system_eq, x0, method=method,
-               options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
-
-    if printsuccess == True:
-        print(sol.success)
-
-    return sol.x
-
-def solve_sse_manual(funk, x0, twin=10., method=None, printsuccess=False,
-                     no_odeint=False):
-
-    system_eq = lambda x: np.squeeze(funk(*x))
-
-    if no_odeint:
-
-        x0_root = x0
-
-    if not no_odeint:
-
-        system_eq_odeint = lambda x,t: system_eq(x)
-
-        time_odeint = np.linspace(0., twin, 10)
-
-        inte = odeint(system_eq_odeint, x0, time_odeint)
-
-        x0_root = inte[-1]
-
-    if method is None:
-        method = 'lm'
-
-    # Resolution with scipy.optimize.root
-    sol = root(system_eq, x0_root, method=method,
-               options={'ftol':1e-15, 'xtol':1e-15, 'maxiter':1000})
-
-    if printsuccess == True:
-        print(sol.success)
-
-    return sol.x

@@ -8,17 +8,14 @@ nbsi_solo and nbsi_duo detectors.
 """
 
 # adding ethem module path to the pythonpath
-import sys
 import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.linalg as LA
-from os.path import dirname, abspath
 
 import ethem as eth
 
 import config_red_toy as config
-from config_red_toy import evad
+from config_red_toy import syst, evad
 
 plt.close('all')
 
@@ -39,9 +36,9 @@ def test_solve_sse_param():
     v_array = 10**np.linspace(np.log10(0.02), np.log10(50), 100)
 
     param_plot = (
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
             config.R0
     )
 
@@ -60,11 +57,11 @@ def test_solve_sse_param():
     for ind, ax in enumerate(ax_iv):
 
         param_sym = (
-                eth.System.Voltstat_b.voltage,
+                syst.Voltstat_b.voltage,
                 param_plot[ind]
         )
 
-        ss_point = eth.solve_sse_param(param_sym, evad)
+        ss_point = eth.solve_sse_param(syst, param_sym, evad)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -96,10 +93,10 @@ def test_impedance_matrix_param():
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
     )
 
     param_arrays = (
@@ -120,7 +117,7 @@ def test_impedance_matrix_param():
                 param_plot[ind],
         )
 
-        jac_param_fun = eth.impedance_matrix_param(param_sym, evad,
+        jac_param_fun = eth.impedance_matrix_param(syst, param_sym, evad,
                                                    auto_ss=True)
 
         for p in tqdm.tqdm(param_arrays[ind]):
@@ -151,10 +148,10 @@ def test_eigen_param():
     time_array = np.arange(0., L, fs**-1)
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
     )
 
     param_arrays = (
@@ -175,7 +172,7 @@ def test_eigen_param():
                 param_plot[ind],
         )
 
-        eigen_param_fun = eth.eigen_param(param_sym, evad, auto_ss=True)
+        eigen_param_fun = eth.eigen_param(syst, param_sym, evad, auto_ss=True)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -225,7 +222,7 @@ def test_per_param():
                 param_plot[ind],
         )
 
-        per_param_fun = eth.per_param(param_sym, evad)
+        per_param_fun = eth.per_param(syst, param_sym, evad)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -275,7 +272,7 @@ def test_perf_param():
                 param_plot[ind],
         )
 
-        perf_param_fun = eth.perf_param(param_sym, evad)
+        perf_param_fun = eth.perf_param(syst, param_sym, evad)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -305,10 +302,10 @@ def test_response_event_param():
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
             config.tau_therm,
             config.eps,
     )
@@ -333,7 +330,7 @@ def test_response_event_param():
                 param_plot[ind],
         )
 
-        response_param_fun = eth.response_event_param(param_sym, evad)
+        response_param_fun = eth.response_event_param(syst, param_sym, evad)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -359,19 +356,19 @@ def test_response_event_param():
 def testy_measure_noise_param():
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
-    param_sym = (eth.System.Voltstat_b.voltage, eth.System.Thermostat_b.temperature)
+    param_sym = (syst.Voltstat_b.voltage, syst.Thermostat_b.temperature)
 
     param_eval = (2., 0.018)
 
-    ref_bath = eth.System.Capacitor_f
+    ref_bath = syst.Capacitor_f
 
-#    A = eth.noise_obs_param(param_sym, evad, ref_bath)
-    A = eth.measure_noise_param(param_sym, evad, ref_bath)
+#    A = eth.noise_obs_param(syst, param_sym, evad, ref_bath)
+    A = eth.measure_noise_param(syst, param_sym, evad, ref_bath)
 
     AA = A(param_eval)
 
     noise_dict = dict()
-    for key, nfun in AA.iteritems():
+    for key, nfun in AA.items():
         noise_dict[key] = nfun(freq_array)
 
     return noise_dict
@@ -383,17 +380,17 @@ def testy_measure_noise_param():
 def testy_response_noise_param():
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
-    param_sym = (eth.System.Voltstat_b.voltage, eth.System.Thermostat_b.temperature)
+    param_sym = (syst.Voltstat_b.voltage, syst.Thermostat_b.temperature)
 
     param_eval = (2., 0.018)
 
-#    A = eth.noise_flux_fun_param(param_sym, evad, ref_bath)
-    A = eth.response_noise_param(param_sym, evad)
+#    A = eth.noise_flux_fun_param(syst, param_sym, evad, ref_bath)
+    A = eth.response_noise_param(syst, param_sym, evad)
 
     AA = A(param_eval)
 
     noise_dict = dict()
-    for key, nfun in AA.iteritems():
+    for key, nfun in AA.items():
         noise_dict[key] = nfun(freq_array)
 
     return noise_dict
@@ -409,10 +406,10 @@ def test_response_noise_param():
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
     )
 
     param_arrays = (
@@ -433,16 +430,16 @@ def test_response_noise_param():
                 param_plot[ind],
         )
 
-        noise_param_fun = eth.response_noise_param(param_sym, evad)
+        noise_param_fun = eth.response_noise_param(syst, param_sym, evad)
 
-        ref_bath = eth.System.Capacitor_f
-        noise_tot_param = eth.noise_tot_param(param_sym, evad, ref_bath)
+        ref_bath = syst.Capacitor_f
+        noise_tot_param = eth.noise_tot_param(syst, param_sym, evad, ref_bath)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
             noise_fun_dict = noise_param_fun((p,))
 
-            for k, nfun in noise_fun_dict.iteritems():
+            for k, nfun in noise_fun_dict.items():
 
                 noise_array = nfun(freq_array)[-1, :]
                 ax.loglog(freq_array, noise_array)
@@ -472,13 +469,13 @@ def test_noise_tot_param():
     """
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
-    ref_bath = eth.System.Capacitor_f
+    ref_bath = syst.Capacitor_f
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
     )
 
     param_arrays = (
@@ -499,7 +496,7 @@ def test_noise_tot_param():
                 param_plot[ind],
         )
 
-        noise_param_fun = eth.noise_tot_param(param_sym, evad, ref_bath)
+        noise_param_fun = eth.noise_tot_param(syst, param_sym, evad, ref_bath)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -527,13 +524,13 @@ def test_nep_ref_param():
     """
     freq_array = np.arange(L**-1, fs/2.+L**-1, L**-1)
 
-    ref_bath = eth.System.Capacitor_f
+    ref_bath = syst.Capacitor_f
 
     param_plot = (
-            eth.System.Voltstat_b.voltage,
-            eth.System.Thermostat_b.temperature,
-            eth.System.ThermalLink_ep.cond_alpha,
-            eth.System.ThermalLink_leak.cond_alpha,
+            syst.Voltstat_b.voltage,
+            syst.Thermostat_b.temperature,
+            syst.ThermalLink_ep.cond_alpha,
+            syst.ThermalLink_leak.cond_alpha,
     )
 
     param_arrays = (
@@ -554,8 +551,8 @@ def test_nep_ref_param():
                 param_plot[ind],
         )
 
-        nep_param = eth.nep_ref_param(param_sym, evad, ref_bath)
-        res_param = eth.res_ref_param(param_sym, evad, ref_bath, fs, L)
+        nep_param = eth.nep_ref_param(syst, param_sym, evad, ref_bath)
+        res_param = eth.res_ref_param(syst, param_sym, evad, ref_bath, fs, L)
 
         for p in tqdm.tqdm(param_arrays[ind]):
 
@@ -583,7 +580,7 @@ def test_nep_ref_param():
 #%%
 if __name__ == '__main__':
 
-    test_solve_sse_param()
+#    test_solve_sse_param()
 #
 #    test_impedance_matrix_param()
 #
@@ -595,13 +592,13 @@ if __name__ == '__main__':
 #
 #    test_response_event_param()
 #
-#    print testy_measure_noise_param()
+#    print(testy_measure_noise_param())
 #
 #    AA = testy_response_noise_param()
 #
 #    AAA = dict()
-#    for k,v in AA.iteritems():
-#        print v.shape
+#    for k,v in AA.items():
+#        print(v.shape)
 #        AAA[k] = v[-1, :]
 
 #    test_response_noise_param()

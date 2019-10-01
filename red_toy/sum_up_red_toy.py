@@ -8,19 +8,14 @@ nbsi_solo and nbsi_duo detectors.
 """
 
 # adding ethem module path to the pythonpath
-import sys
-import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.linalg as LA
-from os.path import dirname, abspath
 
 import ethem as eth
 
-from config_red_toy import evad
+from config_red_toy import syst, evad
 
 plt.close('all')
-
 #==============================================================================
 # PARAMETERS
 #==============================================================================
@@ -37,74 +32,75 @@ fs = 1e3
 # STEADY STATE SOLUTION
 #==============================================================================
 # checking the quantities at steady state
-edict = eth.dict_sse(evad)
+edict = eth.dict_sse(syst, evad)
 
-sol_ss = (eth.solve_sse(evad)).x
+sol_ss = (eth.solve_sse(syst, evad)).x
 # sol_ss is OK
-CA = eth.System.ThermalBath_a.th_capacity.subs(edict)
+CA = syst.ThermalBath_a.th_capacity.subs(edict)
 # CA is OK.
-CP = eth.System.ThermalBath_p.th_capacity.subs(edict)
+CP = syst.ThermalBath_p.th_capacity.subs(edict)
 # CP is OK.
-CE = eth.System.ThermalBath_ntd.th_capacity.subs(edict)
+CE = syst.ThermalBath_ntd.th_capacity.subs(edict)
 # CE is OK
-Gep = eth.System.ThermalLink_ep.conductance.subs(edict)
+Gep = syst.ThermalLink_ep.conductance.subs(edict)
 # Gep is OK
-Gglue = eth.System.ThermalLink_glue.conductance.subs(edict)
+Gglue = syst.ThermalLink_glue.conductance.subs(edict)
 # Gglue is OK
-Gleak = eth.System.ThermalLink_leak.conductance.subs(edict)
+Gleak = syst.ThermalLink_leak.conductance.subs(edict)
 # Gleak is OK
-R = eth.System.Resistor_ntd.resistivity.subs(edict)
+R = syst.Resistor_ntd.resistivity.subs(edict)
 # R is OK
 
-##==============================================================================
-## IV CURVES
-##==============================================================================
-#t_array = np.linspace(0.012, 0.050, 10)
-#v_array = 10**np.linspace(np.log10(0.02), np.log10(50), 100)
-#
-#param = (
-#        eth.System.Thermostat_b.temperature,
-#        eth.System.Voltstat_b.voltage,
-#)
-#
-#ss_point = eth.solve_sse_param(param, evad)
-#
-#iv_dict = dict()
-#for temp in tqdm.tqdm(t_array):
-#    iv_list = list()
-#    for volt in v_array:
-#        sol = ss_point((temp, volt))
-#        iv_list.append(sol.x[-1])
-#    iv_dict[temp] = iv_list
-#
-#### PLOT
-#fig_iv = plt.figure('IV curves')
-#
-#temp_list = iv_dict.keys()
-#temp_list.sort()
-#for temp in temp_list:
-#    plt.loglog(v_array, iv_dict[temp], label='{0:.4f} K'.format(temp))
-#
-#plt.grid(True)
-#fig_iv.legend(loc='right')
-#fig_iv.tight_layout()
-#
-#### TODO:
-#    # evidence of instability in the steady-state resolution
-#    # at low temperature and high currents
-#    # in-depth study needed
-#    # a renormalization of the equation might do the trick
+#==============================================================================
+# IV CURVES
+#==============================================================================
+t_array = np.linspace(0.005, 0.050, 20)
+v_array = 10**np.linspace(np.log10(0.02), np.log10(50), 100)
+
+param = (
+        syst.Thermostat_b.temperature,
+        syst.Voltstat_b.voltage,
+)
+
+ss_point = eth.solve_sse_param(syst, param, evad)
+
+iv_dict = dict()
+import tqdm
+for temp in tqdm.tqdm(t_array):
+    iv_list = list()
+    for volt in v_array:
+        sol = ss_point((temp, volt))
+        iv_list.append(sol.x[-1])
+    iv_dict[temp] = iv_list
+
+### PLOT
+fig_iv = plt.figure('IV curves')
+
+temp_list = list(iv_dict.keys())
+temp_list.sort()
+for temp in temp_list:
+    plt.loglog(v_array, iv_dict[temp], label='{0:.4f} K'.format(temp))
+
+plt.grid(True)
+fig_iv.legend(loc='right')
+fig_iv.tight_layout()
+
+### TODO:
+    # evidence of instability in the steady-state resolution
+    # at low temperature and high currents
+    # in-depth study needed
+    # a renormalization of the equation might do the trick
 
 #==============================================================================
 # SYSTEM PERTURBATION
 #==============================================================================
-per = eth.System.perturbation
+per = syst.perturbation
 
 #==============================================================================
 # NUMERICAL INTEGRATION (NI)
 #==============================================================================
 # temporal
-ni_time_array, ni_pulse_array = eth.num_int(per.matrix, evad, sol_ss,
+ni_time_array, ni_pulse_array = eth.num_int(syst, evad, sol_ss,
                                             L=L, fs=fs)
 
 # pulse amplitude
@@ -122,7 +118,7 @@ ni_freq_psd, ni_pulse_psd = eth.psd(ni_pulse_fft, fs)
 ##==============================================================================
 ## FREQUENCY INVERSION
 ##==============================================================================
-edict = eth.dict_sse(evad)
+edict = eth.dict_sse(syst, evad)
 
 # time and freq array
 fi_time_array = np.arange(0, L, fs**-1)
@@ -130,7 +126,7 @@ fi_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
 fi_freq_fftshift = np.fft.fftshift(fi_freq_fft)
 
 # fft freq
-fi_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
+fi_pulse_fft = eth.response_event(syst, edict, fs)(fi_freq_fft)
 fi_pulse_fftshift = np.fft.fftshift(fi_pulse_fft)
 
 # temporal
@@ -145,7 +141,7 @@ fi_freq_psd, fi_pulse_psd = eth.psd(fi_pulse_fft, fs)
 #==============================================================================
 # TEMPORAL DIAGONALIZATION
 #==============================================================================
-#coup_mat = eth.System.coupling_matrix
+#coup_mat = syst.coupling_matrix
 #coup_mat_num = coup_mat.subs(edict)
 #coup_mat_eval = np.array(coup_mat_num).astype('float64')
 #
@@ -156,7 +152,7 @@ fi_freq_psd, fi_pulse_psd = eth.psd(fi_pulse_fft, fs)
 #proj_inv = LA.inv(proj)
 #
 #import sympy as sy
-#per_td = (eth.System.capacity_matrix)**-1 * sy.Matrix(per.fraction)
+#per_td = (syst.capacity_matrix)**-1 * sy.Matrix(per.fraction)
 #
 #phi_amp = [float((f*per.energy).subs(edict)) for f in per_td]
 #eig_amp = proj_inv.dot(phi_amp)
@@ -170,7 +166,7 @@ td_time_array = np.arange(0, L, fs**-1)
 ## pulse amplitude
 #td_amp = max(abs(td_pulse_array[-1]))
 
-tau_coup, amp_coup, pulse_fun = eth.eigen_fun(edict)
+tau_coup, amp_coup, pulse_fun = eth.eigen_fun(syst, edict)
 td_pulse_array = pulse_fun(td_time_array)
 
 # pulse amplitude
@@ -214,7 +210,7 @@ for f in f0_array:
 # TEMPORAL PLOT
 #==============================================================================
 
-num = len(eth.System.bath_list)
+num = len(syst.bath_list)
 fig, ax = plt.subplots(nrows=num,
                        ncols=2,
                        sharex=True,
@@ -222,7 +218,7 @@ fig, ax = plt.subplots(nrows=num,
                        figsize=(13,9),
                        squeeze=False)
 
-lab = [str(b.main_quant) for b in eth.System.bath_list]
+lab = [str(b.main_quant) for b in syst.bath_list]
 
 for i in range(num):
     for j in (0,1):
@@ -320,28 +316,28 @@ fig.show()
 #==============================================================================
 # NOISE RESPONSE
 #==============================================================================
-ref_bath = eth.System.Capacitor_f
-ref_ind = eth.System.bath_list.index(ref_bath)
+ref_bath = syst.Capacitor_f
+ref_ind = syst.bath_list.index(ref_bath)
 
 inf = 1.
 sup = 100.
 
 ref_freq_fft = np.fft.fftfreq(int(L*fs), fs**-1)
-ref_pulse_fft = eth.response_event(per.matrix, edict, fs)(fi_freq_fft)
+ref_pulse_fft = eth.response_event(syst, edict, fs)(fi_freq_fft)
 ref_freq_psd, ref_pulse_psd = eth.psd(ref_pulse_fft, fs)
 
-psd_fun_dict = eth.response_noise(edict)
+psd_fun_dict = eth.response_noise(syst, edict)
 psd_eval_dict = {k:v(ref_freq_psd) for k,v in psd_fun_dict.items()}
 
-obs_fun_dict = eth.measure_noise(ref_bath, edict)
+obs_fun_dict = eth.measure_noise(syst, ref_bath, edict)
 obs_eval_dict = {k:v(ref_freq_psd) for k,v in obs_fun_dict.items()}
 
-full_array = eth.noise_tot_fun(ref_bath, edict)(ref_freq_psd)
+full_array = eth.noise_tot_fun(syst, ref_bath, edict)(ref_freq_psd)
 
 #nep_array = full_array / fi_pulse_psd[ref_ind]
-nep_freq_array, nep_array = eth.nep_ref(per.matrix, edict, fs, L, ref_bath)
+nep_freq_array, nep_array = eth.nep_ref(syst, edict, fs, L, ref_bath)
 
-ref_pulse_ft = eth.response_event_ft(per.matrix, edict)(nep_freq_array)[ref_ind]
+ref_pulse_ft = eth.response_event_ft(syst, edict)(nep_freq_array)[ref_ind]
 ref_sensitivity = np.abs(ref_pulse_ft)**2
 
 # experimental nep and sensitivity
@@ -378,7 +374,7 @@ freq_trapz = fi_freq_psd[inf_index:sup_index]
 #res = (invres_int)**-0.5
 
 #res = eth.nep_to_res(nep_freq_array, nep_array, (inf, sup))
-res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
+res = eth.res_ref(syst, edict, fs, L, ref_bath, (inf, sup))
 
 res_msg = 'Resolution : {:.0f} eV'.format(
         res * per.energy.subs(edict) / (1.6e-19)

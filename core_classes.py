@@ -14,7 +14,7 @@ import abc
 import sys
 
 class System(object):
-    """ Un-instanced class representing the system environment in which the
+    """ Instanced class representing the system environment in which the
     different Element instances interact with each others.
     """
 
@@ -27,45 +27,45 @@ class System(object):
     # Boltzmann constant symbol
     kB = sy.symbols('kB')
 
-    @classmethod
-    def checkpoint(cls):
+
+    def checkpoint(self):
         """ Fast checking the elements of the system by printing theier label.
         """
-        for e in cls.elements_list:
+        for e in self.elements_list:
             print('The label of this bath is ', e.label)
 
-    @classmethod
-    def subclass_list(cls, subcls):
+
+    def subclass_list(self, subself):
         """ Define or update the attribute 'bath_list', a list tracking all
         the RealBath in the Elements instances.
         """
-        return [b for b in cls.elements_list if isinstance(b, subcls)]
+        return [b for b in self.elements_list if isinstance(b, subself)]
 
-    @classmethod
-    def build_phi_vect(cls):
+
+    def build_phi_vect(self):
         """ Returns the main_quant vectors in the order of bath_list.
         Also defines the attribute 'phi_vect'.
         """
-        main_quant_list =  [b.main_quant for b in System.bath_list]
-        main_quant_mat = sy.Matrix(len(System.bath_list), 1, main_quant_list)
+        main_quant_list =  [b.main_quant for b in self.bath_list]
+        main_quant_mat = sy.Matrix(len(self.bath_list), 1, main_quant_list)
 
-        System.phi_vect = main_quant_mat
-        return System.phi_vect
+        self.phi_vect = main_quant_mat
+        return self.phi_vect
 
-    @classmethod
-    def build_capacity_matrix(cls):
+
+    def build_capacity_matrix(self):
         """ Returns the diagonal matrix containing the thermal/electric capacity
         in the same order as the bath_list.
         Also defines the attribute 'capacity_matrix'.
         """
-        capa_list = [b.capacity for b in System.bath_list]
+        capa_list = [b.capacity for b in self.bath_list]
         capa_mat = sy.diag(*capa_list)
 
-        System.capacity_matrix = capa_mat
-        return System.capacity_matrix
+        self.capacity_matrix = capa_mat
+        return self.capacity_matrix
 
-    @classmethod
-    def build_steady_state_eq(cls):
+
+    def build_steady_state_eq(self):
         """ Returns the system of steady state equations.
         Quite the same as the ete function, only without the thermal capacity.
         Also defines the attribute 'sseq'.
@@ -75,14 +75,14 @@ class System(object):
         return :
         a * f(T)
         """
-        power_list = [bath.eq().args[1] for bath in System.bath_list]
+        power_list = [bath.eq().args[1] for bath in self.bath_list]
         power_mat = sy.Matrix(power_list)
 
-        System.sseq = power_mat
-        return System.sseq
+        self.sseq = power_mat
+        return self.sseq
 
-    @classmethod
-    def build_eletro_thermal_eq(cls):
+
+    def build_eletro_thermal_eq(self):
         """ Returns the expression of the temperature derivative from the
         Electro-Thermal Equations.
         Also defines the attributes 'eteq'.
@@ -92,27 +92,27 @@ class System(object):
         return :
         a * f(T)
         """
-        power_list = [b.eq().args[1]/b.capacity for b in System.bath_list]
+        power_list = [b.eq().args[1]/b.capacity for b in self.bath_list]
         power_mat = sy.Matrix(power_list)
 
-        System.eteq = power_mat
-        return System.eteq
+        self.eteq = power_mat
+        return self.eteq
 
-    @classmethod
-    def build_coupling_matrix(cls):
+
+    def build_coupling_matrix(self):
         """ Returns the coupling matrix. Such that:
         dPhi/dt = -CM*Phi + F(t)
         Also defines the attribute 'coupling_matrix'.
         """
-        bath_num = len(System.bath_list)
+        bath_num = len(self.bath_list)
 
         coup_list = list()
-        for bath in System.bath_list:
+        for bath in self.bath_list:
             flux = bath.eq().args[1]
 
             coup = sy.zeros(1, bath_num)
 
-            for j, quant in enumerate(System.phi_vect):
+            for j, quant in enumerate(self.phi_vect):
                 coup[j] = flux.diff(quant) / bath.capacity
 
             coup_list.append(coup)
@@ -126,30 +126,30 @@ class System(object):
         ### dPhi/dt = - M * Phi
         coup_mat = -M
 
-        System.coupling_matrix = coup_mat
-        return System.coupling_matrix
+        self.coupling_matrix = coup_mat
+        return self.coupling_matrix
 
-    @classmethod
-    def build_admittance_mat(cls):
+
+    def build_admittance_mat(self):
         """ Returns the complex admittance matrix. It si the inverse of the
         complex impedance matrix.
         dPhi/dt = -CM*Phi + F(t) <=> A*Phi = tf[F](w)
         with A = CM + 1j*w*Id
         Also define the attribute 'admittance_matrix'.
         """
-        cm_mat = System.coupling_matrix
+        cm_mat = self.coupling_matrix
 
-        deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * System.freq
+        deri = sy.eye(cm_mat.shape[0]) * sy.I * 2 * sy.pi * self.freq
 
-        capa_matrix = System.capacity_matrix
+        capa_matrix = self.capacity_matrix
 
         admit = capa_matrix*(cm_mat + deri)
 
-        System.admittance_matrix = admit
-        return System.admittance_matrix
+        self.admittance_matrix = admit
+        return self.admittance_matrix
 
-    @classmethod
-    def build_sym(cls, savepath='ethem_system_output.txt'):
+
+    def build_sym(self, savepath='ethem_system_output.txt'):
         """ Call other classmethod to defines or update all the symbolic
         attributes of the System. Also, pretty_print thiese symbolic attributes
         in a txt file.
@@ -174,15 +174,15 @@ class System(object):
             sys.stdout = open(savepath, 'w')
 
             # defining the attribute 'bath_list'
-            System.bath_list = System.subclass_list(RealBath)
+            self.bath_list = self.subclass_list(RealBath)
 
             # printing and defining all the symbolic attributes
-            pprint(System.build_phi_vect)
-            pprint(System.build_capacity_matrix)
-            pprint(System.build_steady_state_eq)
-            pprint(System.build_eletro_thermal_eq)
-            pprint(System.build_coupling_matrix)
-            pprint(System.build_admittance_mat)
+            pprint(self.build_phi_vect)
+            pprint(self.build_capacity_matrix)
+            pprint(self.build_steady_state_eq)
+            pprint(self.build_eletro_thermal_eq)
+            pprint(self.build_coupling_matrix)
+            pprint(self.build_admittance_mat)
 
             # String to conclude the txt file, and assure a good pprint.
             print('\n END OF PPRINT.')
@@ -205,15 +205,19 @@ class Element(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, label):
+    def __init__(self, system, label):
+        
+        assert isinstance(system, System)
+        self.system = system
+        
         self.label = label
         self.name =  '{}_{}'.format(self.__class__.__name__, self.label)
 
         # listing all the elements
-        System.elements_list.append(self)
+        self.system.elements_list.append(self)
 
         # creating an attribute to the system for each element
-        setattr(System, self.name, self)
+        setattr(self.system, self.name, self)
 
 
 class Bath(Element):
@@ -227,10 +231,10 @@ class Bath(Element):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, label):
+    def __init__(self, system, label):
         """ Required for co-operative subclassing
         """
-        super(Bath, self).__init__(label)
+        super(Bath, self).__init__(system, label)
 
         # listing the attached links, automatically set by the
         # link __init__ function.
@@ -273,9 +277,9 @@ class RealBath(Bath):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, label):
+    def __init__(self, system, label):
         # required for co-operative subclassing
-        super(RealBath, self).__init__(label)
+        super(RealBath, self).__init__(system, label)
 
         # empty dictionnary of the intrinsic noise power
         self.noise_sys = dict()
@@ -313,7 +317,7 @@ class RealBath(Bath):
         power -= sum([lin.main_flux for lin in self.link_out])
 
         # time derivative
-        var = self.capacity * sy.Derivative(self.main_quant, System.time)
+        var = self.capacity * sy.Derivative(self.main_quant, self.system.time)
 
         # equation in bath
         eq = sy.Eq(var, power, evaluate=False)
@@ -337,12 +341,14 @@ class Link(Element):
         Automatically update the link_in and link_out attributes of the
         from_bath and the to_bath.
         """
-        super(Link, self).__init__(label)
 
-        # can only attach Link to Bath
+        # can only attach Link to Bath in the same system
         assert isinstance(from_bath, Bath)
         assert isinstance(to_bath, Bath)
-
+        assert from_bath.system is to_bath.system
+        
+        super(Link, self).__init__(from_bath.system, label)
+        
         self.from_bath = from_bath
         self.to_bath = to_bath
 

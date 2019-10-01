@@ -9,9 +9,9 @@ scheme of the electro-thermal system.
 import pydot
 from PIL import Image
 
-from .core_classes import System, Bath, Link
+from .core_classes import Bath, Link
 
-def sys_scheme(fp='scheme.png', display=True):
+def sys_scheme(system, fp='scheme.png', display=True):
     """ Create and display the symbolic scheme of the System.
 
     Parameters
@@ -31,8 +31,8 @@ def sys_scheme(fp='scheme.png', display=True):
     graph.set_node_defaults(shape='rectangle')
     graph.set_edge_defaults(arrowhead='none')
 
-    bath_list = [e for e in System.elements_list if isinstance(e, Bath)]
-    link_list = [e for e in System.elements_list if isinstance(e, Link)]
+    bath_list = [e for e in system.elements_list if isinstance(e, Bath)]
+    link_list = [e for e in system.elements_list if isinstance(e, Link)]
 
     node_dict = dict()
     for e in bath_list:

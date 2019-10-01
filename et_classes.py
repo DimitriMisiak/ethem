@@ -21,8 +21,8 @@ class Thermostat(Bath):
     This thermal object has its temperature as 'main_quant' and its power as
     'main_flux'.
     """
-    def __init__(self, label):
-        super(Thermostat, self).__init__(label)
+    def __init__(self, system, label):
+        super(Thermostat, self).__init__(system, label)
         self.temperature = sy.symbols('T_'+ self.label)
         self.power = 0
 
@@ -41,8 +41,8 @@ class Voltstat(Bath):
     This electric object has its voltage as 'main_quant' and its current as
     'main_flux'.
     """
-    def __init__(self, label):
-        super(Voltstat, self).__init__(label)
+    def __init__(self, system, label):
+        super(Voltstat, self).__init__(system, label)
         self.voltage = sy.symbols('V_'+ self.label)
         self.current = 0
 
@@ -59,8 +59,8 @@ class ThermalBath(Thermostat, RealBath):
     """ Subclass of Thermostat and RealBath, which is defined
     by its thermal capacity.
     """
-    def __init__(self, label):
-        super(ThermalBath, self).__init__(label)
+    def __init__(self, system, label):
+        super(ThermalBath, self).__init__(system, label)
         self.th_capacity = sy.symbols('C_'+self.label)
 
     @property
@@ -72,8 +72,8 @@ class Capacitor(Voltstat, RealBath):
     """ Subclass of Voltstat and RealBath, which is defined
     by its electric capacity.
     """
-    def __init__(self, label):
-        super(Capacitor, self).__init__(label)
+    def __init__(self, system, label):
+        super(Capacitor, self).__init__(system, label)
         self.el_capacity = sy.symbols('C_'+label)
 
     @property
@@ -160,9 +160,13 @@ class Perturbation(object):
         List of the thermalization time in each bath. Its length must match
         the number of bath in the system.
     """
-    def __init__(self, energy, fraction, tau_therm):
+    def __init__(self, system, energy, fraction, tau_therm):
 
-        bath_list = System.bath_list
+        assert isinstance(system, System)
+        self.system = system
+        setattr(self.system, 'perturbation', self)
+        
+        bath_list = self.system.bath_list
         num = len(bath_list)
 
         assert len(fraction) == num
@@ -171,11 +175,11 @@ class Perturbation(object):
         per = sy.zeros(len(bath_list), 1)
 
         for i in range(num):
-            per[i] = fraction[i] * event_power(energy, tau_therm[i], System.time)
+            per[i] = fraction[i] * event_power(energy, tau_therm[i], self.system.time)
 
         self.matrix = per
         self.energy = energy
         self.fraction = fraction
         self.tau_therm = tau_therm
 
-        System.perturbation = self
+        

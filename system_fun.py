@@ -9,12 +9,11 @@ Should be completd by a GUI in order to easily implete the system
 electro-thermal scheme.
 """
 
-from .core_classes import System
 from .et_classes import ThermalBath, ThermalLink
 
-def dynamic_check(eval_dict):
+def dynamic_check(system, eval_dict):
 
-    for e in System.elements_list:
+    for e in system.elements_list:
         if isinstance(e, ThermalBath):
             print('In the bath {}:\n{}={}\n'.format(
                     e.name,

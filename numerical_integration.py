@@ -11,10 +11,8 @@ import numpy as np
 import sympy as sy
 from scipy.integrate import odeint, solve_ivp
 
-from .core_classes import System
 
-
-def num_int(per, eval_dict, x0, fs=1e3, L=1.):
+def num_int(system, eval_dict, x0, fs=1e3, L=1.):
     """ Numerical integration of the electro-thermal equation with
     power perturbation for the given evaluation dictionnary.
 
@@ -49,20 +47,20 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     #time array for plot
     time = np.arange(0., L, fs**-1)
 
-    t = System.time
+    t = system.time
 
-    capa_matrix = System.capacity_matrix
+    capa_matrix = system.capacity_matrix
     
     ### TEST 2019/07/01 to fix Heaviside computation
 #    per_arg = capa_matrix**-1 * per / sy.Heaviside(t)
-    per_arg = capa_matrix**-1 * per
+    per_arg = capa_matrix**-1 * system.perturbation.matrix
 
     def my_heaviside(t):
         return np.heaviside(t, 1.)
         
-    phi = System.phi_vect
+    phi = system.phi_vect
 
-    eteq = System.eteq
+    eteq = system.eteq
 
     ###
     print(per_arg)
@@ -96,7 +94,7 @@ def num_int(per, eval_dict, x0, fs=1e3, L=1.):
     return (time, sol_per.T,)
 
 
-def num_int_param(param,  eval_dict, fs, L):
+def num_int_param(system, param,  eval_dict, fs, L):
 #(per, eval_dict, x0, fs=1e3, L=1.):
 
     """ Return an auxiliary function numerically integrating the equations
@@ -143,17 +141,17 @@ def num_int_param(param,  eval_dict, fs, L):
 
     trange = np.arange(0, L, fs**-1)
 
-    t = System.time
+    t = system.time
 
-    capa_matrix = System.capacity_matrix
+    capa_matrix = system.capacity_matrix
 
-    per = System.perturbation
+    per = system.perturbation
     per_arg = capa_matrix**-1 * per.matrix / sy.Heaviside(t)
 
-    phi = tuple(System.phi_vect)
+    phi = tuple(system.phi_vect)
     nphi = len(phi)
 
-    eteq = System.eteq
+    eteq = system.eteq
 
     eteq_num = eteq.subs(char_dict)
     per_num = per_arg.subs(char_dict)
@@ -191,42 +189,3 @@ def num_int_param(param,  eval_dict, fs, L):
         return sol_per.T
 
     return num_int_fun
-
-def num_int_proto(per, eval_dict, x0, fs=1e3, L=1., max_step_coef=10.):
-    """ Same as num_int but using the solve_ivp supposed to be more
-    sofisticated than odeint. However this function of numerical integration
-    is very slow..
-    So not using this !
-    Just here for curiosity purpose...
-    """
-    x0 = np.array(x0)
-
-    time = np.arange(0., L, fs**-1)
-
-    phi = System.phi_vect
-    param = [System.t] + list(phi)
-
-    # perturbation
-    capa_matrix = System.capacity_matrix
-    per_arg = capa_matrix**-1 * per / sy.Heaviside(System.t)
-
-    eteq = System.eteq
-
-    eq = per_arg + eteq
-    eq_num = list(eq.subs(eval_dict))
-    #eq_fun = sy.lambdify(param, eq_num, modules='numpy')
-
-    eq_fun = sy.lambdify(param, eq_num)
-
-    def eq_aux(t, y):
-        list_y = list(y)
-        param = [t] + list_y
-        vec = eq_fun(*param)
-        return vec
-
-    sol = solve_ivp(eq_aux, [0, L], x0, t_eval=time,
-                    max_step=max_step_coef*fs**-1)
-
-    sol_array = np.vstack((sol.t, sol.y))
-
-    return sol_array

@@ -9,24 +9,21 @@ Basically set up the simulation of the detector.
 
 import sympy as sy
 
-# adding ethem module path to the pythonpath
-import sys
-from os.path import dirname
-sys.path.append( dirname(dirname(dirname(__file__))) )
-
 import ethem as eth
 
 #==============================================================================
 # SYSTEM
 #==============================================================================
+syst = eth.System()
+
 ### Defining time and frequency variables
-time, freq = eth.System.time, eth.System.freq
+time, freq = syst.time, syst.freq
 
 ### Chassis ground
-ground = eth.Voltstat('ground')
+ground = eth.Voltstat(syst, 'ground')
 ground.voltage = 0
 ### Wire capacitance
-capa = eth.Capacitor('f')
+capa = eth.Capacitor(syst, 'f')
 ### NTD resistance
 elntd = eth.Resistor(capa, ground, 'ntd')
 
@@ -71,7 +68,7 @@ test_noise = test**0.5
 #==============================================================================
 # UPDATING THE SYSTEM
 #==============================================================================
-eth.System.build_sym(savepath='output/build_sym')
+syst.build_sym(savepath='output/build_sym')
 
 #==============================================================================
 # EVENT PERTURBATION
@@ -117,10 +114,10 @@ evad.update(evad_noise)
 
 ### checking the completeness of the evaluation dictionnary
 # free symbols without evaluation
-free_set = set(eth.System.phi_vect)|{time,freq}
+free_set = set(syst.phi_vect)|{time,freq}
 
 # checking the electro-thermal equations
-ete_free = eth.System.eteq.subs(evad).free_symbols
+ete_free = syst.eteq.subs(evad).free_symbols
 assert ete_free.issubset(free_set)
 
 ## checking the event perturbation
@@ -128,7 +125,7 @@ assert ete_free.issubset(free_set)
 #assert per_free.issubset(free_set)
 
 # checking the noise power
-for e in eth.System.elements_list:
+for e in syst.elements_list:
 
     if isinstance(e, eth.RealBath):
 
@@ -147,4 +144,4 @@ for e in eth.System.elements_list:
             assert noise_free.issubset(free_set)
 
 if __name__ == '__main__':
-    eth.sys_scheme(fp='output/scheme.png')
+    eth.sys_scheme(syst, fp='output/scheme.png')
