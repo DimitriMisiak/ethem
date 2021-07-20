@@ -255,11 +255,17 @@ def test_perf_param():
             config.tau_therm,
             config.eps
     )
+    
+    fig_iv, ax_iv = plt.subplots(ncols=2, nrows=2,
+                                 num='pseudo IV curves', figsize=(11, 11))
+    ax_iv = ax_iv.ravel()
 
-    param_arrays = (
-            10**np.linspace(-3,-1, 10),
-            np.linspace(0., 0.9, 10),
-    )
+    for ind, ax in enumerate(ax_iv):
+
+        param_arrays = (
+                10**np.linspace(-3,-1, 10),
+                np.linspace(0., 0.9, 10),
+        )
 
     ### PLOT
     fig_iv, ax_iv = plt.subplots(ncols=2, nrows=1,
@@ -584,7 +590,7 @@ if __name__ == '__main__':
 #
 #    test_impedance_matrix_param()
 #
-#    test_eigen_param()
+    test_eigen_param()
 #
 #    test_per_param()
 #

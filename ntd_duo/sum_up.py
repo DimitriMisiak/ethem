@@ -153,7 +153,7 @@ res = eth.res_ref(per.matrix, edict, fs, L, ref_bath, (inf, sup))
 res_msg = 'Resolution : {:.0f} eV'.format(
         res * per.energy.subs(edict) / (1.6e-19)
 )
-print res_msg
+print(res_msg)
 
 ##==============================================================================
 ## PLOT
